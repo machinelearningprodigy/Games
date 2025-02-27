@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo-Snake: Cybernetic Crawler</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0a0a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #0fdfff;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            border: 2px solid #0fdfff;
+            box-shadow: 0 0 20px #0fdfff, inset 0 0 10px #0fdfff;
+            border-radius: 5px;
+            background: linear-gradient(rgba(10, 10, 26, 0.9), rgba(10, 10, 26, 0.9)), 
+                        url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='none'/%3E%3Cpath d='M0 0h1v1H0z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M10 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M20 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M30 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M40 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M50 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M60 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M70 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M80 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M90 0h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M0 10h1v1H0z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M10 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M20 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M30 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M40 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M50 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M60 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M70 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M80 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3Cpath d='M90 10h1v1h-1z' fill='%230fdfff' fill-opacity='0.2'/%3E%3C/svg%3E");
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        .hud {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .score, .level {
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #0fdfff;
+        }
+        
+        .title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #0fdfff;
+            animation: pulse 2s infinite;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 26, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        .game-over.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .game-over h2 {
+            font-size: 36px;
+            color: #ff3366;
+            text-shadow: 0 0 10px #ff3366;
+            margin-bottom: 20px;
+        }
+        
+        .game-over .final-score {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background-color: transparent;
+            border: 2px solid #0fdfff;
+            color: #0fdfff;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            background-color: #0fdfff;
+            color: #0a0a1a;
+            box-shadow: 0 0 15px #0fdfff;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            color: #5599aa;
+        }
+        
+        @keyframes pulse {
+            0% {
+                text-shadow: 0 0 10px #0fdfff;
+            }
+            50% {
+                text-shadow: 0 0 20px #0fdfff, 0 0 30px #0fdfff;
+            }
+            100% {
+                text-shadow: 0 0 10px #0fdfff;
+            }
+        }
+        
+        .power-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 200px;
+            height: 10px;
+            background-color: rgba(15, 223, 255, 0.1);
+            border: 1px solid #0fdfff;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .power-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #0fdfff;
+            box-shadow: 0 0 10px #0fdfff;
+            transition: width 0.3s;
+        }
+        
+        .power-label {
+            position: absolute;
+            bottom: 35px;
+            left: 20px;
+            font-size: 12px;
+            color: #0fdfff;
+        }
+        
+        .obstacle {
+            position: absolute;
+            background-color: #ff3366;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ff3366;
+        }
+        
+        .portal-effect {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+        
+        .portal-effect.active {
+            animation: portalPulse 1s forwards;
+        }
+        
+        @keyframes portalPulse {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(15, 223, 255, 0.7);
+            }
+            100% {
+                transform: scale(3);
+                opacity: 0;
+                box-shadow: 0 0 0 30px rgba(15, 223, 255, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">Neo-Snake: Cybernetic Crawler</h1>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+        
+        <div class="hud">
+            <div class="score">SCORE: 0</div>
+            <div class="level">LEVEL: 1</div>
+        </div>
+        
+        <div class="power-label">PORTAL ENERGY</div>
+        <div class="power-bar">
+            <div class="power-fill"></div>
+        </div>
+        
+        <div class="portal-effect"></div>
+        
+        <div class="game-over">
+            <h2>SYSTEM FAILURE</h2>
+            <div class="final-score">DATA COLLECTED: 0</div>
+            <button class="btn" id="restartBtn">REBOOT SYSTEM</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <p>USE ARROW KEYS TO NAVIGATE | PRESS SPACE TO ACTIVATE PORTAL JUMP</p>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game canvas and context
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Game elements
+            const scoreElement = document.querySelector('.score');
+            const levelElement = document.querySelector('.level');
+            const gameOverScreen = document.querySelector('.game-over');
+            const finalScoreElement = document.querySelector('.final-score');
+            const restartBtn = document.getElementById('restartBtn');
+            const powerFill = document.querySelector('.power-fill');
+            const portalEffect = document.querySelector('.portal-effect');
+            
+            // Game settings
+            const GRID_SIZE = 20;
+            const GRID_WIDTH = canvas.width / GRID_SIZE;
+            const GRID_HEIGHT = canvas.height / GRID_SIZE;
+            
+            // Game state
+            let snake = [];
+            let food = {};
+            let direction = 'RIGHT';
+            let nextDirection = 'RIGHT';
+            let score = 0;
+            let level = 1;
+            let gameSpeed = 150;
+            let gameInterval;
+            let obstacles = [];
+            let portalEnergy = 0;
+            let maxPortalEnergy = 100;
+            let isPortalActive = false;
+            let gameOver = false;
+            
+            // Initialize the game
+            function initGame() {
+                // Reset game state
+                snake = [
+                    {x: 5, y: 10},
+                    {x: 4, y: 10},
+                    {x: 3, y: 10}
+                ];
+                direction = 'RIGHT';
+                nextDirection = 'RIGHT';
+                score = 0;
+                level = 1;
+                gameSpeed = 150;
+                obstacles = [];
+                portalEnergy = 0;
+                isPortalActive = false;
+                gameOver = false;
+                
+                // Update UI
+                scoreElement.textContent = `SCORE: ${score}`;
+                levelElement.textContent = `LEVEL: ${level}`;
+                powerFill.style.width = '0%';
+                gameOverScreen.classList.remove('active');
+                
+                // Place food and start game loop
+                placeFood();
+                if (gameInterval) clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, gameSpeed);
+            }
+            
+            // Place food in a random position not occupied by snake or obstacles
+            function placeFood() {
+                let validPosition = false;
+                while (!validPosition) {
+                    food = {
+                        x: Math.floor(Math.random() * GRID_WIDTH),
+                        y: Math.floor(Math.random() * GRID_HEIGHT)
+                    };
+                    
+                    // Check if food position overlaps with snake
+                    validPosition = true;
+                    for (let segment of snake) {
+                        if (segment.x === food.x && segment.y === food.y) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    // Check if food position overlaps with obstacles
+                    if (validPosition) {
+                        for (let obstacle of obstacles) {
+                            if (obstacle.x === food.x && obstacle.y === food.y) {
+                                validPosition = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Create obstacles for the current level
+            function createObstacles() {
+                obstacles = [];
+                
+                // Number of obstacles based on level
+                const obstacleCount = Math.min(5, level - 1);
+                
+                for (let i = 0; i < obstacleCount; i++) {
+                    let validPosition = false;
+                    while (!validPosition) {
+                        const obstacle = {
+                            x: Math.floor(Math.random() * GRID_WIDTH),
+                            y: Math.floor(Math.random() * GRID_HEIGHT)
+                        };
+                        
+                        // Check if obstacle position overlaps with snake or food
+                        validPosition = true;
+                        for (let segment of snake) {
+                            if (segment.x === obstacle.x && segment.y === obstacle.y) {
+                                validPosition = false;
+                                break;
+                            }
+                        }
+                        
+                        if (validPosition && food.x === obstacle.x && food.y === obstacle.y) {
+                            validPosition = false;
+                        }
+                        
+                        // If valid, add obstacle
+                        if (validPosition) {
+                            obstacles.push(obstacle);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Main game loop
+            function gameLoop() {
+                update();
+                draw();
+                
+                if (gameOver) {
+                    clearInterval(gameInterval);
+                    gameOverScreen.classList.add('active');
+                    finalScoreElement.textContent = `DATA COLLECTED: ${score}`;
+                }
+            }
+            
+            // Update game state
+            function update() {
+                // Update direction
+                direction = nextDirection;
+                
+                // Calculate new head position
+                const head = {...snake[0]};
+                
+                switch (direction) {
+                    case 'UP':
+                        head.y--;
+                        break;
+                    case 'DOWN':
+                        head.y++;
+                        break;
+                    case 'LEFT':
+                        head.x--;
+                        break;
+                    case 'RIGHT':
+                        head.x++;
+                        break;
+                }
+                
+                // Check for portal activation
+                if (isPortalActive) {
+                    // Teleport to a random safe location
+                    let safeLocation = findSafeLocation();
+                    if (safeLocation) {
+                        head.x = safeLocation.x;
+                        head.y = safeLocation.y;
+                        
+                        // Show portal effect
+                        showPortalEffect(head.x, head.y);
+                    }
+                    isPortalActive = false;
+                    portalEnergy = 0;
+                    powerFill.style.width = '0%';
+                }
+                
+                // Check if game over (wall collision)
+                if (head.x < 0 || head.x >= GRID_WIDTH || head.y < 0 || head.y >= GRID_HEIGHT) {
+                    gameOver = true;
+                    return;
+                }
+                
+                // Check for collision with snake body
+                for (let i = 0; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        gameOver = true;
+                        return;
+                    }
+                }
+                
+                // Check for collision with obstacles
+                for (let obstacle of obstacles) {
+                    if (head.x === obstacle.x && head.y === obstacle.y) {
+                        gameOver = true;
+                        return;
+                    }
+                }
+                
+                // Add new head
+                snake.unshift(head);
+                
+                // Check for food collision
+                if (head.x === food.x && head.y === food.y) {
+                    // Increase score
+                    score += 10;
+                    scoreElement.textContent = `SCORE: ${score}`;
+                    
+                    // Increase portal energy
+                    portalEnergy = Math.min(maxPortalEnergy, portalEnergy + 25);
+                    powerFill.style.width = `${portalEnergy}%`;
+                    
+                    // Check for level up
+                    if (score % 50 === 0) {
+                        levelUp();
+                    }
+                    
+                    // Place new food
+                    placeFood();
+                } else {
+                    // Remove tail
+                    snake.pop();
+                }
+            }
+            
+            // Find a safe location for portal teleportation
+            function findSafeLocation() {
+                // Try to find a safe spot (not occupied by snake or obstacles)
+                const possibleLocations = [];
+                
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    for (let y = 0; y < GRID_HEIGHT; y++) {
+                        let isSafe = true;
+                        
+                        // Check if location overlaps with snake
+                        for (let segment of snake) {
+                            if (segment.x === x && segment.y === y) {
+                                isSafe = false;
+                                break;
+                            }
+                        }
+                        
+                        // Check if location overlaps with obstacles
+                        if (isSafe) {
+                            for (let obstacle of obstacles) {
+                                if (obstacle.x === x && obstacle.y === y) {
+                                    isSafe = false;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (isSafe) {
+                            possibleLocations.push({x, y});
+                        }
+                    }
+                }
+                
+                if (possibleLocations.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * possibleLocations.length);
+                    return possibleLocations[randomIndex];
+                }
+                
+                return null;
+            }
+            
+            // Show portal effect animation
+            function showPortalEffect(x, y) {
+                portalEffect.style.left = `${x * GRID_SIZE + GRID_SIZE / 2}px`;
+                portalEffect.style.top = `${y * GRID_SIZE + GRID_SIZE / 2}px`;
+                portalEffect.classList.add('active');
+                
+                setTimeout(() => {
+                    portalEffect.classList.remove('active');
+                }, 1000);
+            }
+            
+            // Level up
+            function levelUp() {
+                level++;
+                levelElement.textContent = `LEVEL: ${level}`;
+                
+                // Increase game speed
+                gameSpeed = Math.max(50, 150 - (level - 1) * 10);
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, gameSpeed);
+                
+                // Add obstacles
+                createObstacles();
+            }
+            
+            // Draw game elements
+            function draw() {
+                // Clear canvas
+                ctx.fillStyle = 'rgba(10, 10, 26, 0.8)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid (optional for sci-fi effect)
+                ctx.strokeStyle = 'rgba(15, 223, 255, 0.1)';
+                ctx.lineWidth = 0.5;
+                
+                for (let x = 0; x < canvas.width; x += GRID_SIZE) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                
+                for (let y = 0; y < canvas.height; y += GRID_SIZE) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw snake
+                for (let i = 0; i < snake.length; i++) {
+                    const segment = snake[i];
+                    
+                    // Different style for head
+                    if (i === 0) {
+                        ctx.fillStyle = '#0fdfff';
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = '#0fdfff';
+                    } else {
+                        // Gradient color for body segments
+                        const blue = Math.floor(255 - (i / snake.length) * 155);
+                        ctx.fillStyle = `rgb(15, ${blue}, 255)`;
+                        ctx.shadowBlur = 5;
+                    }
+                    
+                    ctx.fillRect(segment.x * GRID_SIZE, segment.y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+                    
+                    // Add cyborg details to head
+                    if (i === 0) {
+                        // Draw eye
+                        ctx.fillStyle = '#ff3366';
+                        
+                        if (direction === 'RIGHT') {
+                            ctx.fillRect(segment.x * GRID_SIZE + GRID_SIZE - 8, segment.y * GRID_SIZE + 5, 3, 3);
+                        } else if (direction === 'LEFT') {
+                            ctx.fillRect(segment.x * GRID_SIZE + 5, segment.y * GRID_SIZE + 5, 3, 3);
+                        } else if (direction === 'UP') {
+                            ctx.fillRect(segment.x * GRID_SIZE + 5, segment.y * GRID_SIZE + 5, 3, 3);
+                        } else {
+                            ctx.fillRect(segment.x * GRID_SIZE + 5, segment.y * GRID_SIZE + GRID_SIZE - 8, 3, 3);
+                        }
+                    }
+                }
+                
+                // Reset shadow
+                ctx.shadowBlur = 0;
+                
+                // Draw food
+                ctx.fillStyle = '#ff3366';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ff3366';
+                ctx.beginPath();
+                ctx.arc(
+                    food.x * GRID_SIZE + GRID_SIZE / 2,
+                    food.y * GRID_SIZE + GRID_SIZE / 2,
+                    GRID_SIZE / 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Draw energy core in food
+                ctx.fillStyle = '#ffcc00';
+                ctx.beginPath();
+                ctx.arc(
+                    food.x * GRID_SIZE + GRID_SIZE / 2,
+                    food.y * GRID_SIZE + GRID_SIZE / 2,
+                    GRID_SIZE / 5,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Draw obstacles
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ff3366';
+                
+                for (let obstacle of obstacles) {
+                    // Create a hazard pattern
+                    ctx.fillStyle = '#ff3366';
+                    ctx.beginPath();
+                    ctx.arc(
+                        obstacle.x * GRID_SIZE + GRID_SIZE / 2,
+                        obstacle.y * GRID_SIZE + GRID_SIZE / 2,
+                        GRID_SIZE / 2,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    // Add warning pattern
+                    ctx.strokeStyle = '#ffcc00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(obstacle.x * GRID_SIZE + 5, obstacle.y * GRID_SIZE + 5);
+                    ctx.lineTo(obstacle.x * GRID_SIZE + GRID_SIZE - 5, obstacle.y * GRID_SIZE + GRID_SIZE - 5);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(obstacle.x * GRID_SIZE + GRID_SIZE - 5, obstacle.y * GRID_SIZE + 5);
+                    ctx.lineTo(obstacle.x * GRID_SIZE + 5, obstacle.y * GRID_SIZE + GRID_SIZE - 5);
+                    ctx.stroke();
+                }
+                
+                // Reset shadow
+                ctx.shadowBlur = 0;
+            }
+            
+            // Event listeners
+            document.addEventListener('keydown', (e) => {
+                if (!gameOver) {
+                    switch (e.key) {
+                        case 'ArrowUp':
+                            if (direction !== 'DOWN') {
+                                nextDirection = 'UP';
+                            }
+                            e.preventDefault();
+                            break;
+                        case 'ArrowDown':
+                            if (direction !== 'UP') {
+                                nextDirection = 'DOWN';
+                            }
+                            e.preventDefault();
+                            break;
+                        case 'ArrowLeft':
+                            if (direction !== 'RIGHT') {
+                                nextDirection = 'LEFT';
+                            }
+                            e.preventDefault();
+                            break;
+                        case 'ArrowRight':
+                            if (direction !== 'LEFT') {
+                                nextDirection = 'RIGHT';
+                            }
+                            e.preventDefault();
+                            break;
+                        case ' ':
+                            // Activate portal if energy is full
+                            if (portalEnergy >= maxPortalEnergy) {
+                                isPortalActive = true;
+                            }
+                            e.preventDefault();
+                            break;
+                    }
+                }
+            });
+            
+            // Restart button event listener
+            restartBtn.addEventListener('click', initGame);
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>

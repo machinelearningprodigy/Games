@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bow and Arrow Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            cursor: default;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        #home-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        #game-title {
+            font-size: 4rem;
+            color: #FFD700;
+            text-shadow: 0 0 10px #FF8C00, 0 0 20px #FF8C00;
+            margin-bottom: 20px;
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #FF8C00, 0 0 20px #FF8C00;
+            }
+            to {
+                text-shadow: 0 0 15px #FF8C00, 0 0 30px #FF8C00, 0 0 40px #FF8C00;
+            }
+        }
+        
+        #play-btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transform: scale(1);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #play-btn:hover {
+            transform: scale(1.1);
+            background: #45a049;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        #instructions {
+            margin-top: 30px;
+            color: #FFFFFF;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+        
+        #game-canvas {
+            background: transparent;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        
+        .hud-item {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            width: 150px;
+        }
+        
+        .hud-value {
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        #game-over {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        #game-over-title {
+            font-size: 3rem;
+            color: #FF6347;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #800000;
+        }
+        
+        #final-score {
+            font-size: 2rem;
+            color: #FFD700;
+            margin-bottom: 30px;
+        }
+        
+        #restart-btn {
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            background: #4169E1;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #restart-btn:hover {
+            transform: scale(1.1);
+            background: #3151b5;
+        }
+        
+        #wind-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #wind-arrow {
+            display: inline-block;
+            transform-origin: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        #home-screen, #game-over {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        #hud {
+            animation: slideIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="hud">
+            <div class="hud-item">
+                <span>Score:</span>
+                <span id="score-value" class="hud-value">0</span>
+            </div>
+            <div class="hud-item">
+                <span>Arrows:</span>
+                <span id="arrows-value" class="hud-value">5</span>
+            </div>
+        </div>
+        
+        <div id="wind-indicator">
+            <span>Wind:</span>
+            <span id="wind-arrow">→</span>
+            <span id="wind-strength">0</span>
+        </div>
+        
+        <div id="home-screen">
+            <h1 id="game-title">BOW & ARROW</h1>
+            <button id="play-btn">PLAY</button>
+            <div id="instructions">
+                <p>Click and drag to aim your arrow</p>
+                <p>Release to shoot</p>
+                <p>Hit the target to score points</p>
+                <p>Watch out for the wind!</p>
+            </div>
+        </div>
+        
+        <div id="game-over">
+            <h2 id="game-over-title">GAME OVER</h2>
+            <div id="final-score">Score: 0</div>
+            <button id="restart-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Canvas Setup
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+        const homeScreen = document.getElementById('home-screen');
+        const gameOverScreen = document.getElementById('game-over');
+        const playBtn = document.getElementById('play-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const scoreValue = document.getElementById('score-value');
+        const arrowsValue = document.getElementById('arrows-value');
+        const finalScore = document.getElementById('final-score');
+        const windArrow = document.getElementById('wind-arrow');
+        const windStrength = document.getElementById('wind-strength');
+        
+        // Resize canvas to fit container
+        function resizeCanvas() {
+            canvas.width = gameContainer.clientWidth;
+            canvas.height = gameContainer.clientHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Game Variables
+        let gameActive = false;
+        let score = 0;
+        let arrows = 5;
+        let arrowsFired = 0;
+        let bowX = 100;
+        let bowY = canvas.height / 2;
+        let isDragging = false;
+        let startX, startY, endX, endY;
+        let arrowsInFlight = [];
+        let targets = [];
+        let wind = 0;
+        let clouds = [];
+        
+        // Images
+        const bowImg = new Image();
+        bowImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAiIGhlaWdodD0iMTIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik02MCAxMTBDMzAgODAgMzAgNDAgNjAgMTBDNTUgNDAgNTUgODAgNjAgMTEwWiIgZmlsbD0iIzhiNDUxMyIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNNjAgNTVMNDUgNTVMNDUgNjVMNjAgNjVMNjAgNTVaIiBmaWxsPSIjNzAzNzBlIi8+PHBhdGggZD0iTTYwIDEwQzYwIDEwIDM1IDYwIDYwIDExMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=';
+        
+        const arrowImg = new Image();
+        arrowImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgNUw1NSA1IiBzdHJva2U9IiM4YzZiNDkiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTQwIDFMNTUgNUw0MCA5IiBmaWxsPSIjYzA5MjZhIiBzdHJva2U9IiM4YzZiNDkiIHN0cm9rZS13aWR0aD0iMSIvPjxwYXRoIGQ9Ik0xIDNMMyA1TDEgN1oiIGZpbGw9IiNjMDkyNmEiLz48L3N2Zz4=';
+        
+        // Target Setup
+        function createTarget() {
+            return {
+                x: canvas.width - 100,
+                y: Math.random() * (canvas.height - 200) + 100,
+                radius: 50,
+                rings: [
+                    { radius: 50, color: '#B22222', points: 10 },
+                    { radius: 40, color: '#FF0000', points: 20 },
+                    { radius: 30, color: '#FFFFFF', points: 30 },
+                    { radius: 20, color: '#0000FF', points: 40 },
+                    { radius: 10, color: '#FFD700', points: 50 }
+                ],
+                speed: Math.random() * 2 + 1,
+                direction: Math.random() > 0.5 ? 1 : -1
+            };
+        }
+        
+        // Cloud Setup
+        function createClouds() {
+            for (let i = 0; i < 5; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * 100 + 20,
+                    speed: Math.random() * 0.5 + 0.2,
+                    size: Math.random() * 30 + 40
+                });
+            }
+        }
+        
+        // Initialize Game
+        function initGame() {
+            gameActive = true;
+            score = 0;
+            arrows = 5;
+            arrowsFired = 0;
+            arrowsInFlight = [];
+            targets = [];
+            
+            scoreValue.textContent = score;
+            arrowsValue.textContent = arrows;
+            
+            // Create target
+            targets.push(createTarget());
+            
+            // Create clouds
+            createClouds();
+            
+            // Set initial wind
+            updateWind();
+            
+            // Hide home screen
+            homeScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Update Wind
+        function updateWind() {
+            wind = (Math.random() * 4 - 2).toFixed(1);
+            windStrength.textContent = Math.abs(wind);
+            
+            if (wind > 0) {
+                windArrow.textContent = '→';
+                windArrow.style.transform = 'rotate(0deg)';
+            } else if (wind < 0) {
+                windArrow.textContent = '←';
+                windArrow.style.transform = 'rotate(180deg)';
+            } else {
+                windArrow.textContent = '•';
+            }
+        }
+        
+        // Game Loop
+        function gameLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background elements
+            drawBackground();
+            
+            // Update and draw targets
+            updateTargets();
+            
+            // Draw bow
+            drawBow();
+            
+            // Draw aiming line when dragging
+            if (isDragging) {
+                drawAimingLine();
+            }
+            
+            // Update and draw arrows in flight
+            updateArrows();
+            
+            // Check game over condition
+            if (arrows === 0 && arrowsInFlight.length === 0) {
+                endGame();
+                return;
+            }
+            
+            // Continue game loop
+            if (gameActive) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // Draw Background
+        function drawBackground() {
+            // Draw clouds
+            ctx.fillStyle = '#FFFFFF';
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > canvas.width + 100) {
+                    cloud.x = -100;
+                    cloud.y = Math.random() * 100 + 20;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size / 2, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size / 2, cloud.y - cloud.size / 4, cloud.size / 3, 0, Math.PI * 2);
+                ctx.arc(cloud.x - cloud.size / 3, cloud.y - cloud.size / 3, cloud.size / 3, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size / 4, cloud.y + cloud.size / 4, cloud.size / 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw ground
+            const gradient = ctx.createLinearGradient(0, canvas.height - 60, 0, canvas.height);
+            gradient.addColorStop(0, '#8B4513');
+            gradient.addColorStop(1, '#654321');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+            
+            // Draw grass
+            ctx.fillStyle = '#556B2F';
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width; x += 5) {
+                const height = Math.random() * 10 + 5;
+                ctx.moveTo(x, canvas.height - 60);
+                ctx.lineTo(x, canvas.height - 60 - height);
+                ctx.lineTo(x + 2, canvas.height - 60 - height + 2);
+                ctx.lineTo(x + 4, canvas.height - 60);
+            }
+            ctx.fill();
+        }
+        
+        // Update and Draw Targets
+        function updateTargets() {
+            targets.forEach(target => {
+                // Move target up and down
+                target.y += target.speed * target.direction;
+                if (target.y < target.radius || target.y > canvas.height - target.radius - 60) {
+                    target.direction *= -1;
+                }
+                
+                // Draw target
+                target.rings.forEach(ring => {
+                    ctx.fillStyle = ring.color;
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, ring.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            });
+        }
+        
+        // Draw Bow
+        function drawBow() {
+            ctx.save();
+            
+            // Position bow at character's hand
+            ctx.translate(bowX, bowY);
+            
+            if (isDragging) {
+                // Calculate angle for bow rotation when aiming
+                const angle = Math.atan2(endY - bowY, endX - bowX);
+                ctx.rotate(angle);
+            }
+            
+            // Draw bow image
+            ctx.drawImage(bowImg, -20, -60, 70, 120);
+            
+            ctx.restore();
+        }
+        
+        // Draw Aiming Line
+        function drawAimingLine() {
+            // Calculate aiming power based on drag distance
+            const dx = startX - endX;
+            const dy = startY - endY;
+            const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 150);
+            const power = distance / 150;
+            
+            // Draw arrow position when aiming
+            const angle = Math.atan2(endY - bowY, endX - bowX);
+            
+            ctx.save();
+            ctx.translate(bowX, bowY);
+            ctx.rotate(angle);
+            
+            // Draw tension line
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -20);
+            ctx.lineTo(-distance, -20);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 20);
+            ctx.lineTo(-distance, 20);
+            ctx.stroke();
+            
+            // Draw arrow when aiming
+            ctx.drawImage(arrowImg, -distance, -5, 60, 10);
+            
+            // Draw power indicator
+            ctx.fillStyle = `rgba(255, ${255 - power * 255}, 0, 0.7)`;
+            ctx.fillRect(-50, 40, power * 100, 10);
+            ctx.strokeStyle = '#000';
+            ctx.strokeRect(-50, 40, 100, 10);
+            
+            ctx.restore();
+        }
+        
+        // Fire Arrow
+        function fireArrow() {
+            if (arrows <= 0) return;
+            
+            // Calculate arrow velocity based on drag distance
+            const dx = startX - endX;
+            const dy = startY - endY;
+            const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 150);
+            const power = distance / 150;
+            
+            const angle = Math.atan2(endY - bowY, endX - bowX);
+            const velocityX = Math.cos(angle) * power * 15;
+            const velocityY = Math.sin(angle) * power * 15;
+            
+            // Create new arrow
+            arrowsInFlight.push({
+                x: bowX,
+                y: bowY,
+                velocityX: velocityX,
+                velocityY: velocityY,
+                angle: angle,
+                active: true
+            });
+            
+            // Decrease arrow count
+            arrows--;
+            arrowsValue.textContent = arrows;
+            arrowsFired++;
+            
+            // Update wind every few shots
+            if (arrowsFired % 2 === 0) {
+                updateWind();
+            }
+        }
+        
+        // Update and Draw Arrows
+        function updateArrows() {
+            arrowsInFlight.forEach(arrow => {
+                if (!arrow.active) return;
+                
+                // Apply gravity and wind
+                arrow.velocityY += 0.2; // Gravity
+                arrow.velocityX += parseFloat(wind) * 0.03; // Wind effect
+                
+                // Update position
+                arrow.x += arrow.velocityX;
+                arrow.y += arrow.velocityY;
+                
+                // Update angle based on velocity
+                arrow.angle = Math.atan2(arrow.velocityY, arrow.velocityX);
+                
+                // Draw arrow
+                ctx.save();
+                ctx.translate(arrow.x, arrow.y);
+                ctx.rotate(arrow.angle);
+                ctx.drawImage(arrowImg, 0, -5, 60, 10);
+                ctx.restore();
+                
+                // Check collision with target
+                checkTargetCollision(arrow);
+                
+                // Check boundaries
+                if (arrow.x > canvas.width || arrow.y > canvas.height || arrow.x < 0) {
+                    arrow.active = false;
+                }
+            });
+            
+            // Remove inactive arrows
+            arrowsInFlight = arrowsInFlight.filter(arrow => arrow.active);
+        }
+        
+        // Check Target Collision
+        function checkTargetCollision(arrow) {
+            targets.forEach(target => {
+                // Calculate distance from arrow tip to target center
+                const tipX = arrow.x + Math.cos(arrow.angle) * 55;
+                const tipY = arrow.y + Math.sin(arrow.angle) * 5;
+                const distance = Math.sqrt((tipX - target.x) ** 2 + (tipY - target.y) ** 2);
+                
+                // Check if arrow hit any ring
+                for (let i = 0; i < target.rings.length; i++) {
+                    if (distance <= target.rings[i].radius) {
+                        // Add points based on ring
+                        score += target.rings[i].points;
+                        scoreValue.textContent = score;
+                        
+                        // Show hit effect
+                        showHitEffect(tipX, tipY, target.rings[i].color);
+                        
+                        // Deactivate arrow
+                        arrow.active = false;
+                        
+                        // Add bonus arrow for bullseye
+                        if (i === target.rings.length - 1) {
+                            arrows++;
+                            arrowsValue.textContent = arrows;
+                            showMessage('BULLSEYE! +1 ARROW', tipX, tipY - 30, '#FFD700');
+                        } else {
+                            showMessage(`+${target.rings[i].points}`, tipX, tipY - 30, '#FFFFFF');
+                        }
+                        
+                        break;
+                    }
+                }
+            });
+        }
+        
+        // Show Hit Effect
+        function showHitEffect(x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, 0.7)`;
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+        
+        // Show Message
+        function showMessage(text, x, y, color) {
+            ctx.font = 'bold 20px Arial';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.fillText(text, x, y);
+        }
+        
+        // End Game
+        function endGame() {
+            gameActive = false;
+            gameOverScreen.style.display = 'flex';
+            finalScore.textContent = `Score: ${score}`;
+        }
+        
+        // Event Listeners
+        playBtn.addEventListener('click', initGame);
+        restartBtn.addEventListener('click', initGame);
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (!gameActive) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            
+            // Only start drag if near bow
+            const distance = Math.sqrt((startX - bowX) ** 2 + (startY - bowY) ** 2);
+            if (distance < 100) {
+                isDragging = true;
+                endX = startX;
+                endY = startY;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !gameActive) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            endX = e.clientX - rect.left;
+            endY = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            if (!isDragging || !gameActive) return;
+            
+            fireArrow();
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            startX = touch.clientX - rect.left;
+            startY = touch.clientY - rect.top;
+            
+            // Only start drag if near bow
+            const distance = Math.sqrt((startX - bowX) ** 2 + (startY - bowY) ** 2);
+            if (distance < 100) {
+                isDragging = true;
+                endX = startX;
+                endY = startY;
+            }
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDragging || !gameActive) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            endX = touch.clientX - rect.left;
+            endY = touch.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (!isDragging || !gameActive) return;
+            e.preventDefault();
+            
+            fireArrow();
+            isDragging = false;
+        });
+    </script>
+</body>
+</html>

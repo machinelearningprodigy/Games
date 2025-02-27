@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sci-Fi Target Shooting</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00e6;
+            --neon-green: #39ff14;
+            --dark-bg: #0a0a1a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+            user-select: none;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: crosshair;
+        }
+        
+        .game-ui {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 10;
+        }
+        
+        .score, .timer {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 10px 20px;
+            font-size: 24px;
+            box-shadow: 0 0 15px var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+        
+        .target {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            animation: pulse 1.5s infinite alternate;
+            transform: translate(-50%, -50%);
+        }
+        
+        .splash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 26, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+        
+        .game-title {
+            font-size: 72px;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--neon-pink), var(--neon-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.7);
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 1);
+        }
+        
+        .difficulty {
+            display: flex;
+            margin: 20px 0;
+        }
+        
+        .diff-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--neon-blue);
+            color: white;
+            padding: 10px 25px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .diff-btn.selected {
+            background: var(--neon-blue);
+            color: var(--dark-bg);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+        
+        .game-over {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .final-score {
+            font-size: 48px;
+            margin: 20px 0;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        .grid-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        
+        .horizontal-line, .vertical-line {
+            position: absolute;
+            background-color: rgba(0, 243, 255, 0.1);
+        }
+        
+        .horizontal-line {
+            width: 100%;
+            height: 1px;
+        }
+        
+        .vertical-line {
+            height: 100%;
+            width: 1px;
+        }
+        
+        .particle {
+            position: absolute;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 10px 2px var(--neon-blue);
+            }
+            100% {
+                box-shadow: 0 0 20px 5px var(--neon-blue);
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+        
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="game-ui">
+            <div class="score">Score: <span id="scoreValue">0</span></div>
+            <div class="timer">Time: <span id="timeValue">60</span>s</div>
+        </div>
+        
+        <div class="grid-lines" id="gridLines"></div>
+    </div>
+    
+    <div class="splash-screen" id="splashScreen">
+        <h1 class="game-title">TARGET NEXUS</h1>
+        <div class="difficulty">
+            <button class="diff-btn" data-diff="easy">EASY</button>
+            <button class="diff-btn selected" data-diff="medium">MEDIUM</button>
+            <button class="diff-btn" data-diff="hard">HARD</button>
+        </div>
+        <button class="btn" id="startBtn">START GAME</button>
+        
+        <div class="game-over" id="gameOver">
+            <h2>GAME OVER</h2>
+            <div class="final-score">Score: <span id="finalScore">0</span></div>
+            <button class="btn" id="restartBtn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let timeLeft = 60;
+        let gameActive = false;
+        let difficulty = 'medium';
+        let targetInterval;
+        let timerInterval;
+        let targetSpeed = 2000; // Base time for targets to disappear
+        let maxTargets = 5; // Maximum simultaneous targets
+        let currentTargets = 0;
+        let gameLevel = 1;
+        
+        // DOM Elements
+        const gameContainer = document.getElementById('gameContainer');
+        const splashScreen = document.getElementById('splashScreen');
+        const gameOverScreen = document.getElementById('gameOver');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const scoreValue = document.getElementById('scoreValue');
+        const timeValue = document.getElementById('timeValue');
+        const finalScore = document.getElementById('finalScore');
+        const diffButtons = document.querySelectorAll('.diff-btn');
+        const gridLines = document.getElementById('gridLines');
+        
+        // Create grid lines
+        function createGridLines() {
+            // Create horizontal lines
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'horizontal-line';
+                line.style.top = `${i * 5}%`;
+                gridLines.appendChild(line);
+            }
+            
+            // Create vertical lines
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'vertical-line';
+                line.style.left = `${i * 5}%`;
+                gridLines.appendChild(line);
+            }
+        }
+        
+        // Initialize the game
+        function init() {
+            createGridLines();
+            
+            // Add event listeners
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', resetGame);
+            
+            // Set difficulty
+            diffButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    diffButtons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    difficulty = btn.dataset.diff;
+                    
+                    // Set game parameters based on difficulty
+                    switch(difficulty) {
+                        case 'easy':
+                            targetSpeed = 2500;
+                            maxTargets = 3;
+                            break;
+                        case 'medium':
+                            targetSpeed = 2000;
+                            maxTargets = 5;
+                            break;
+                        case 'hard':
+                            targetSpeed = 1500;
+                            maxTargets = 7;
+                            break;
+                    }
+                });
+            });
+        }
+        
+        // Start the game
+        function startGame() {
+            score = 0;
+            gameLevel = 1;
+            
+            // Set time based on difficulty
+            switch(difficulty) {
+                case 'easy':
+                    timeLeft = 90;
+                    break;
+                case 'medium':
+                    timeLeft = 60;
+                    break;
+                case 'hard':
+                    timeLeft = 45;
+                    break;
+            }
+            
+            scoreValue.textContent = score;
+            timeValue.textContent = timeLeft;
+            
+            splashScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            gameActive = true;
+            
+            // Start creating targets
+            targetInterval = setInterval(createTarget, 1000);
+            
+            // Start the timer
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        // Update timer
+        function updateTimer() {
+            timeLeft--;
+            timeValue.textContent = timeLeft;
+            
+            // Check level up conditions (every 15 seconds)
+            if (timeLeft % 15 === 0 && timeLeft > 0) {
+                levelUp();
+            }
+            
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+        
+        // Level up - increase difficulty
+        function levelUp() {
+            gameLevel++;
+            targetSpeed = Math.max(targetSpeed - 300, 800); // Speed up targets, min 800ms
+            
+            // Show level up message
+            const levelMsg = document.createElement('div');
+            levelMsg.textContent = `LEVEL ${gameLevel}`;
+            levelMsg.style.position = 'absolute';
+            levelMsg.style.top = '50%';
+            levelMsg.style.left = '50%';
+            levelMsg.style.transform = 'translate(-50%, -50%)';
+            levelMsg.style.fontSize = '48px';
+            levelMsg.style.color = 'var(--neon-green)';
+            levelMsg.style.textShadow = '0 0 15px var(--neon-green)';
+            levelMsg.style.zIndex = '100';
+            gameContainer.appendChild(levelMsg);
+            
+            // Remove after 1.5 seconds
+            setTimeout(() => {
+                levelMsg.remove();
+            }, 1500);
+        }
+        
+        // Create a target
+        function createTarget() {
+            if (!gameActive || currentTargets >= maxTargets) return;
+            
+            currentTargets++;
+            
+            // Target size based on difficulty
+            let size;
+            switch(difficulty) {
+                case 'easy':
+                    size = 50 + Math.random() * 20;
+                    break;
+                case 'medium':
+                    size = 40 + Math.random() * 15;
+                    break;
+                case 'hard':
+                    size = 30 + Math.random() * 10;
+                    break;
+            }
+            
+            // Create the target
+            const target = document.createElement('div');
+            target.className = 'target';
+            
+            // Random position, ensuring target is fully within viewport
+            const padding = size / 2 + 20; // Extra padding to stay away from edges
+            const xPos = padding + Math.random() * (window.innerWidth - padding * 2);
+            const yPos = padding + Math.random() * (window.innerHeight - padding * 2);
+            
+            target.style.width = `${size}px`;
+            target.style.height = `${size}px`;
+            target.style.left = `${xPos}px`;
+            target.style.top = `${yPos}px`;
+            
+            // Random color from neon palette
+            const colors = ['var(--neon-blue)', 'var(--neon-pink)', 'var(--neon-green)'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            target.style.backgroundColor = color;
+            target.style.boxShadow = `0 0 15px ${color}`;
+            
+            // Target click handler
+            target.addEventListener('click', () => {
+                if (!gameActive) return;
+                
+                // Increase score
+                score += gameLevel * (difficulty === 'easy' ? 1 : (difficulty === 'medium' ? 2 : 3));
+                scoreValue.textContent = score;
+                
+                // Show score popup
+                const pointsGained = gameLevel * (difficulty === 'easy' ? 1 : (difficulty === 'medium' ? 2 : 3));
+                const scorePopup = document.createElement('div');
+                scorePopup.textContent = `+${pointsGained}`;
+                scorePopup.style.position = 'absolute';
+                scorePopup.style.left = `${xPos}px`;
+                scorePopup.style.top = `${yPos}px`;
+                scorePopup.style.color = color;
+                scorePopup.style.fontSize = '24px';
+                scorePopup.style.fontWeight = 'bold';
+                scorePopup.style.zIndex = '5';
+                scorePopup.style.pointerEvents = 'none';
+                gameContainer.appendChild(scorePopup);
+                
+                // Animate score popup
+                scorePopup.style.animation = 'floatUp 1s forwards';
+                setTimeout(() => {
+                    scorePopup.remove();
+                }, 1000);
+                
+                // Create explosion particles
+                createExplosion(xPos, yPos, color);
+                
+                // Remove target
+                target.remove();
+                currentTargets--;
+            });
+            
+            gameContainer.appendChild(target);
+            
+            // Remove target after a delay if not clicked
+            setTimeout(() => {
+                if (target.parentNode === gameContainer) {
+                    target.style.animation = 'fadeOut 0.5s forwards';
+                    setTimeout(() => {
+                        if (target.parentNode === gameContainer) {
+                            target.remove();
+                            currentTargets--;
+                        }
+                    }, 500);
+                }
+            }, targetSpeed);
+        }
+        
+        // Create explosion particles
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size between 3 and 8
+                const size = 3 + Math.random() * 5;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = color;
+                
+                // Position at explosion center
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                // Random direction and speed
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 4;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                
+                gameContainer.appendChild(particle);
+                
+                // Animate the particle
+                let posX = x;
+                let posY = y;
+                let opacity = 1;
+                let frame = 0;
+                
+                function animateParticle() {
+                    if (frame >= 40 || opacity <= 0) { // 40 frames = ~0.6s at 60fps
+                        particle.remove();
+                        return;
+                    }
+                    
+                    posX += vx;
+                    posY += vy;
+                    opacity -= 0.025;
+                    
+                    particle.style.left = `${posX}px`;
+                    particle.style.top = `${posY}px`;
+                    particle.style.opacity = opacity;
+                    
+                    frame++;
+                    requestAnimationFrame(animateParticle);
+                }
+                
+                requestAnimationFrame(animateParticle);
+            }
+        }
+        
+        // End the game
+        function endGame() {
+            gameActive = false;
+            clearInterval(targetInterval);
+            clearInterval(timerInterval);
+            
+            // Remove all targets
+            document.querySelectorAll('.target').forEach(target => target.remove());
+            
+            // Show game over screen
+            finalScore.textContent = score;
+            splashScreen.style.display = 'flex';
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Reset the game
+        function resetGame() {
+            gameOverScreen.style.display = 'none';
+            startGame();
+        }
+        
+        // Click anywhere on game container to detect misses
+        gameContainer.addEventListener('click', (e) => {
+            // Only count as miss if clicking directly on game container (not targets)
+            if (e.target === gameContainer || e.target === gridLines) {
+                // Optional: Penalty for missing
+                if (gameActive && difficulty === 'hard') {
+                    score = Math.max(0, score - 1);
+                    scoreValue.textContent = score;
+                }
+            }
+        });
+        
+        // Initialize on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
