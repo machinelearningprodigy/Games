@@ -1,1 +1,0 @@
-https://memory-challenger.tiiny.site
