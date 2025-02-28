@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <style>
+        /* Base Styles */
+body {
+    margin: 0;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Orbitron', 'Rajdhani', sans-serif;
+    overflow: hidden;
+    color: #fff;
+    perspective: 1000px;
+}
+
+/* Background Animation */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 10% 20%, rgba(6,25,56,0.8) 0%, rgba(0,0,0,0) 80%),
+        radial-gradient(circle at 90% 80%, rgba(22,72,139,0.8) 0%, rgba(0,0,0,0) 80%),
+        linear-gradient(to bottom, #000 0%, #001 100%);
+    z-index: -2;
+    animation: bgPulse 15s infinite alternate;
+}
+
+/* Star Field */
+body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 10% 10%, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(1px 1px at 20% 50%, rgba(255, 255, 255, 0.8) 50%, transparent 100%),
+        radial-gradient(2px 2px at 30% 30%, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(2px 2px at 40% 80%, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.8) 50%, transparent 100%),
+        radial-gradient(1px 1px at 60% 20%, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(2px 2px at 70% 70%, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(1px 1px at 80% 30%, rgba(255, 255, 255, 0.8) 50%, transparent 100%),
+        radial-gradient(2px 2px at 90% 60%, rgba(255, 255, 255, 0.9) 50%, transparent 100%);
+    background-repeat: repeat;
+    z-index: -1;
+    opacity: 0.4;
+    animation: starTwinkle 10s infinite;
+}
+
+#game-heading {
+    position: absolute;
+    top: -70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    text-shadow: 
+        0 0 10px rgba(0, 150, 255, 0.8),
+        0 0 20px rgba(0, 100, 255, 0.6),
+        0 0 30px rgba(0, 70, 200, 0.4);
+    animation: headingGlow 4s infinite alternate;
+}
+
+@keyframes headingGlow {
+    0% {
+        text-shadow: 
+            0 0 10px rgba(0, 150, 255, 0.7),
+            0 0 20px rgba(0, 100, 255, 0.5),
+            0 0 30px rgba(0, 70, 200, 0.3);
+    }
+    100% {
+        text-shadow: 
+            0 0 15px rgba(50, 180, 255, 0.8),
+            0 0 30px rgba(30, 150, 255, 0.6),
+            0 0 50px rgba(20, 100, 230, 0.4);
+    }
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 500px;
+    border: none;
+    background-color: rgba(0, 0, 15, 0.6);
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 
+        0 0 10px 2px rgba(0, 150, 255, 0.5),
+        0 0 30px 5px rgba(0, 50, 150, 0.3),
+        inset 0 0 20px rgba(0, 100, 255, 0.2);
+    backdrop-filter: blur(5px);
+    animation: containerGlow 6s infinite alternate;
+    transform-style: preserve-3d;
+    transform: rotateX(1deg);
+}
+
+/* Game Border */
+#game-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    border-radius: 8px;
+    box-sizing: border-box;
+    z-index: -1;
+    animation: borderPulse 4s infinite alternate;
+}
+
+/* Grid Lines */
+#game-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(90deg, transparent 49.9%, rgba(0, 150, 255, 0.1) 50%, transparent 50.1%) 0 0 / 100px 100%,
+        linear-gradient(0deg, transparent 49.9%, rgba(0, 150, 255, 0.1) 50%, transparent 50.1%) 0 0 / 100% 100px;
+    z-index: -1;
+    opacity: 0.3;
+    animation: gridPulse 8s infinite alternate;
+}
+
+.paddle {
+    position: absolute;
+    width: 10px;
+    height: 100px;
+    background: linear-gradient(to bottom, #5af 0%, #4bf 50%, #5af 100%);
+    border-radius: 6px;
+    box-shadow: 
+        0 0 10px 2px rgba(0, 150, 255, 0.8),
+        0 0 20px 5px rgba(0, 100, 255, 0.4);
+    animation: paddleGlow 2s infinite alternate;
+}
+
+#left-paddle {
+    left: 20px;
+    background: linear-gradient(to bottom, #f55 0%, #f44 50%, #f55 100%);
+    box-shadow: 
+        0 0 10px 2px rgba(255, 50, 50, 0.8),
+        0 0 20px 5px rgba(255, 0, 0, 0.4);
+}
+
+#right-paddle {
+    right: 20px;
+    background: linear-gradient(to bottom, #5af 0%, #4bf 50%, #5af 100%);
+    box-shadow: 
+        0 0 10px 2px rgba(0, 150, 255, 0.8),
+        0 0 20px 5px rgba(0, 100, 255, 0.4);
+}
+
+#ball {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: radial-gradient(circle, #fff 0%, #ddf 100%);
+    border-radius: 50%;
+    box-shadow: 
+        0 0 15px 5px rgba(150, 200, 255, 0.9),
+        0 0 30px 10px rgba(100, 150, 255, 0.6);
+    animation: ballPulse 1s infinite alternate;
+}
+
+/* Ball trail effect */
+#ball::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(200, 220, 255, 0.8);
+    border-radius: 50%;
+    filter: blur(5px);
+    z-index: -1;
+    transform: scale(1.5);
+    opacity: 0.6;
+    animation: trailPulse 0.5s infinite alternate;
+}
+
+#center-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, 
+        rgba(150, 200, 255, 0) 0%, 
+        rgba(150, 200, 255, 0.4) 20%, 
+        rgba(150, 200, 255, 0.6) 50%, 
+        rgba(150, 200, 255, 0.4) 80%, 
+        rgba(150, 200, 255, 0) 100%);
+    transform: translateX(-50%);
+    box-shadow: 0 0 15px rgba(150, 200, 255, 0.5);
+    animation: centerLinePulse 4s infinite alternate;
+}
+
+.score {
+    position: absolute;
+    top: 30px;
+    color: #fff;
+    font-size: 42px;
+    font-weight: bold;
+    text-shadow: 
+        0 0 10px rgba(150, 200, 255, 0.8),
+        0 0 20px rgba(100, 150, 255, 0.6);
+    font-family: 'Orbitron', monospace;
+    animation: scoreGlow 3s infinite alternate;
+    letter-spacing: 3px;
+}
+
+#left-score {
+    left: 25%;
+    transform: translateX(-50%);
+    color: #f88;
+    text-shadow: 
+        0 0 10px rgba(255, 100, 100, 0.8),
+        0 0 20px rgba(255, 50, 50, 0.6);
+}
+
+#right-score {
+    right: 25%;
+    transform: translateX(50%);
+    color: #8cf;
+    text-shadow: 
+        0 0 10px rgba(100, 150, 255, 0.8),
+        0 0 20px rgba(50, 100, 255, 0.6);
+}
+
+#game-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 28px;
+    text-align: center;
+    background: rgba(0, 15, 40, 0.8);
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 
+        0 0 20px rgba(0, 150, 255, 0.6),
+        0 0 40px rgba(0, 100, 200, 0.4),
+        inset 0 0 15px rgba(100, 200, 255, 0.3);
+    backdrop-filter: blur(10px);
+    letter-spacing: 2px;
+    border: 1px solid rgba(100, 200, 255, 0.4);
+    display: none;
+    z-index: 100;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    animation: messageGlow 3s infinite alternate;
+}
+
+#start-button {
+    margin-top: 30px;
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #0070ff 0%, #00d2ff 100%);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 18px;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 0 10px rgba(0, 150, 255, 0.8),
+        0 0 20px rgba(0, 100, 255, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+#start-button:hover {
+    background: linear-gradient(135deg, #0090ff 0%, #00f0ff 100%);
+    transform: scale(1.05);
+    box-shadow: 
+        0 0 15px rgba(0, 200, 255, 0.9),
+        0 0 30px rgba(0, 150, 255, 0.6);
+}
+
+#start-button::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0.6) 50%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(45deg);
+    animation: buttonShine 3s infinite;
+}
+
+#controls {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(150, 200, 255, 0.7);
+    font-size: 14px;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0, 100, 255, 0.5);
+    letter-spacing: 1px;
+    padding: 8px 15px;
+    background: rgba(0, 20, 40, 0.4);
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+}
+
+/* Animation Keyframes */
+@keyframes bgPulse {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 100%;
+    }
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes containerGlow {
+    0% {
+        box-shadow: 
+            0 0 10px 2px rgba(0, 150, 255, 0.5),
+            0 0 30px 5px rgba(0, 50, 150, 0.3);
+    }
+    100% {
+        box-shadow: 
+            0 0 15px 3px rgba(0, 180, 255, 0.6),
+            0 0 40px 8px rgba(0, 100, 200, 0.4);
+    }
+}
+
+@keyframes borderPulse {
+    0% {
+        border-color: rgba(0, 150, 255, 0.5);
+        box-shadow: 0 0 10px rgba(0, 150, 255, 0.3);
+    }
+    100% {
+        border-color: rgba(100, 200, 255, 0.7);
+        box-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+    }
+}
+
+@keyframes gridPulse {
+    0% { opacity: 0.2; }
+    100% { opacity: 0.4; }
+}
+
+@keyframes paddleGlow {
+    0% {
+        box-shadow: 
+            0 0 10px 2px rgba(0, 150, 255, 0.7),
+            0 0 20px 5px rgba(0, 100, 255, 0.3);
+    }
+    100% {
+        box-shadow: 
+            0 0 15px 3px rgba(0, 180, 255, 0.8),
+            0 0 30px 8px rgba(0, 130, 255, 0.5);
+    }
+}
+
+@keyframes ballPulse {
+    0% {
+        box-shadow: 
+            0 0 15px 5px rgba(150, 200, 255, 0.8),
+            0 0 30px 10px rgba(100, 150, 255, 0.5);
+    }
+    100% {
+        box-shadow: 
+            0 0 20px 8px rgba(180, 220, 255, 0.9),
+            0 0 40px 15px rgba(130, 180, 255, 0.6);
+    }
+}
+
+@keyframes trailPulse {
+    0% { opacity: 0.5; transform: scale(1.3); }
+    100% { opacity: 0.8; transform: scale(1.8); }
+}
+
+@keyframes centerLinePulse {
+    0% {
+        background: linear-gradient(to bottom, 
+            rgba(150, 200, 255, 0) 0%, 
+            rgba(150, 200, 255, 0.3) 20%, 
+            rgba(150, 200, 255, 0.5) 50%, 
+            rgba(150, 200, 255, 0.3) 80%, 
+            rgba(150, 200, 255, 0) 100%);
+    }
+    100% {
+        background: linear-gradient(to bottom, 
+            rgba(150, 200, 255, 0) 0%, 
+            rgba(150, 200, 255, 0.5) 20%, 
+            rgba(150, 200, 255, 0.7) 50%, 
+            rgba(150, 200, 255, 0.5) 80%, 
+            rgba(150, 200, 255, 0) 100%);
+    }
+}
+
+@keyframes scoreGlow {
+    0% {
+        text-shadow: 
+            0 0 10px rgba(150, 200, 255, 0.7),
+            0 0 20px rgba(100, 150, 255, 0.5);
+    }
+    100% {
+        text-shadow: 
+            0 0 15px rgba(180, 220, 255, 0.8),
+            0 0 30px rgba(130, 180, 255, 0.6);
+    }
+}
+
+@keyframes messageGlow {
+    0% {
+        box-shadow: 
+            0 0 20px rgba(0, 150, 255, 0.5),
+            0 0 40px rgba(0, 100, 200, 0.3);
+    }
+    100% {
+        box-shadow: 
+            0 0 30px rgba(50, 180, 255, 0.6),
+            0 0 60px rgba(30, 130, 230, 0.4);
+    }
+}
+
+@keyframes buttonShine {
+    0% { left: -200%; }
+    30%, 100% { left: 200%; }
+}
+
+/* Font Import - add this at the top of your CSS file */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;700&display=swap');
+    </style>
+</head>
+<body>
+    <div id="game-heading">Pong Game</div>
+    <div id="game-container">
+        <div class="paddle" id="left-paddle"></div>
+        <div class="paddle" id="right-paddle"></div>
+        <div id="ball"></div>
+        <div id="center-line"></div>
+        <div class="score" id="left-score">0</div>
+        <div class="score" id="right-score">0</div>
+        <div id="game-message">
+            Welcome to Pong!
+            <br><br>
+            <button id="start-button">Start Game</button>
+        </div>
+        <div id="controls">
+            Left Player: W/S keys | Right Player: Up/Down arrow keys
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const gameContainer = document.getElementById('game-container');
+        const leftPaddle = document.getElementById('left-paddle');
+        const rightPaddle = document.getElementById('right-paddle');
+        const ball = document.getElementById('ball');
+        const leftScoreDisplay = document.getElementById('left-score');
+        const rightScoreDisplay = document.getElementById('right-score');
+        const gameMessage = document.getElementById('game-message');
+        const startButton = document.getElementById('start-button');
+        
+        // Game state
+        let gameRunning = false;
+        let leftScore = 0;
+        let rightScore = 0;
+        const winningScore = 5;
+        
+        // Ball state
+        let ballX = 0;
+        let ballY = 0;
+        let ballSpeedX = 0;
+        let ballSpeedY = 0;
+        const initialBallSpeed = 5;
+        const ballSpeedIncrease = 0.2;
+        const maxBallSpeed = 15;
+        
+        // Paddle state
+        let leftPaddleY = 0;
+        let rightPaddleY = 0;
+        let leftPaddleDirection = 0;  // -1 up, 0 stationary, 1 down
+        let rightPaddleDirection = 0;
+        const paddleSpeed = 8;
+        
+        // Game dimensions
+        let gameWidth = 0;
+        let gameHeight = 0;
+        const paddleWidth = 10;
+        const paddleHeight = 100;
+        const ballSize = 15;
+        
+        // Initialize game dimensions
+        function updateGameDimensions() {
+            gameWidth = gameContainer.clientWidth;
+            gameHeight = gameContainer.clientHeight;
+        }
+        
+        // Initialize paddle positions
+        function initializePaddles() {
+            leftPaddleY = (gameHeight - paddleHeight) / 2;
+            rightPaddleY = (gameHeight - paddleHeight) / 2;
+            
+            leftPaddle.style.top = `${leftPaddleY}px`;
+            rightPaddle.style.top = `${rightPaddleY}px`;
+        }
+        
+        // Initialize ball position
+        function initializeBall() {
+            ballX = gameWidth / 2 - ballSize / 2;
+            ballY = gameHeight / 2 - ballSize / 2;
+            
+            // Randomize initial direction
+            ballSpeedX = Math.random() > 0.5 ? initialBallSpeed : -initialBallSpeed;
+            ballSpeedY = (Math.random() * 2 - 1) * initialBallSpeed;
+            
+            ball.style.left = `${ballX}px`;
+            ball.style.top = `${ballY}px`;
+        }
+        
+        // Handle keyboard input
+        const keys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Prevent default behavior for game control keys
+            if (['w', 's', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Update paddle positions based on input
+        function updatePaddleInputs() {
+            // Left paddle (W/S keys)
+            leftPaddleDirection = 0;
+            if (keys['w'] || keys['W']) leftPaddleDirection = -1;
+            if (keys['s'] || keys['S']) leftPaddleDirection = 1;
+            
+            // Right paddle (Arrow keys)
+            rightPaddleDirection = 0;
+            if (keys['ArrowUp']) rightPaddleDirection = -1;
+            if (keys['ArrowDown']) rightPaddleDirection = 1;
+        }
+        
+        // Update paddle positions
+        function updatePaddles() {
+            // Update left paddle position
+            leftPaddleY += leftPaddleDirection * paddleSpeed;
+            // Keep paddle within game bounds
+            leftPaddleY = Math.max(0, Math.min(gameHeight - paddleHeight, leftPaddleY));
+            leftPaddle.style.top = `${leftPaddleY}px`;
+            
+            // Update right paddle position
+            rightPaddleY += rightPaddleDirection * paddleSpeed;
+            // Keep paddle within game bounds
+            rightPaddleY = Math.max(0, Math.min(gameHeight - paddleHeight, rightPaddleY));
+            rightPaddle.style.top = `${rightPaddleY}px`;
+        }
+        
+        // Update ball position
+        function updateBall() {
+            // Move ball
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+            
+            // Ball collisions with top and bottom
+            if (ballY <= 0 || ballY >= gameHeight - ballSize) {
+                ballSpeedY = -ballSpeedY;
+                playSound('wall');
+            }
+            
+            // Ball collision with left paddle
+            if (
+                ballX <= 20 + paddleWidth &&
+                ballX >= 20 &&
+                ballY + ballSize >= leftPaddleY &&
+                ballY <= leftPaddleY + paddleHeight
+            ) {
+                // Calculate collision angle based on where the ball hits the paddle
+                const hitPosition = (ballY + ballSize / 2) - (leftPaddleY + paddleHeight / 2);
+                const normalizedHitPosition = hitPosition / (paddleHeight / 2);
+                const bounceAngle = normalizedHitPosition * 0.75;
+                
+                ballSpeedX = Math.abs(ballSpeedX) + ballSpeedIncrease;
+                ballSpeedY = bounceAngle * ballSpeedX;
+                
+                // Cap ball speed
+                if (ballSpeedX > maxBallSpeed) ballSpeedX = maxBallSpeed;
+                
+                playSound('paddle');
+            }
+            
+            // Ball collision with right paddle
+            if (
+                ballX + ballSize >= gameWidth - 20 - paddleWidth &&
+                ballX + ballSize <= gameWidth - 20 &&
+                ballY + ballSize >= rightPaddleY &&
+                ballY <= rightPaddleY + paddleHeight
+            ) {
+                // Calculate collision angle
+                const hitPosition = (ballY + ballSize / 2) - (rightPaddleY + paddleHeight / 2);
+                const normalizedHitPosition = hitPosition / (paddleHeight / 2);
+                const bounceAngle = normalizedHitPosition * 0.75;
+                
+                ballSpeedX = -(Math.abs(ballSpeedX) + ballSpeedIncrease);
+                ballSpeedY = bounceAngle * -ballSpeedX;
+                
+                // Cap ball speed
+                if (Math.abs(ballSpeedX) > maxBallSpeed) ballSpeedX = -maxBallSpeed;
+                
+                playSound('paddle');
+            }
+            
+            // Ball goes past left paddle (right player scores)
+            if (ballX < 0) {
+                rightScore++;
+                rightScoreDisplay.textContent = rightScore;
+                playSound('score');
+                checkForWinner();
+                if (gameRunning) {
+                    initializeBall();
+                }
+            }
+            
+            // Ball goes past right paddle (left player scores)
+            if (ballX > gameWidth - ballSize) {
+                leftScore++;
+                leftScoreDisplay.textContent = leftScore;
+                playSound('score');
+                checkForWinner();
+                if (gameRunning) {
+                    initializeBall();
+                }
+            }
+            
+            // Update ball position
+            ball.style.left = `${ballX}px`;
+            ball.style.top = `${ballY}px`;
+        }
+        
+        // Check if a player has won
+        function checkForWinner() {
+            if (leftScore >= winningScore) {
+                gameRunning = false;
+                showGameMessage('Left Player Wins!');
+            } else if (rightScore >= winningScore) {
+                gameRunning = false;
+                showGameMessage('Right Player Wins!');
+            }
+        }
+        
+        // Show game message
+        function showGameMessage(message) {
+            gameMessage.innerHTML = message + '<br><br><button id="start-button">Play Again</button>';
+            gameMessage.style.display = 'block';
+            document.getElementById('start-button').addEventListener('click', startGame);
+        }
+        
+        // Hide game message
+        function hideGameMessage() {
+            gameMessage.style.display = 'none';
+        }
+        
+        // Play sound effects (simplified)
+        function playSound(type) {
+            // In a real game, you would add actual sound effects here
+            // This is just a placeholder for where sound effects would go
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (gameRunning) {
+                updatePaddleInputs();
+                updatePaddles();
+                updateBall();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // Start game
+        function startGame() {
+            // Reset scores
+            leftScore = 0;
+            rightScore = 0;
+            leftScoreDisplay.textContent = leftScore;
+            rightScoreDisplay.textContent = rightScore;
+            
+            // Initialize game elements
+            updateGameDimensions();
+            initializePaddles();
+            initializeBall();
+            
+            // Start the game
+            gameRunning = true;
+            hideGameMessage();
+            gameLoop();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (gameRunning) {
+                // Pause the game during resize
+                gameRunning = false;
+                showGameMessage('Game Paused (Window Resized)<br>Click to continue');
+            }
+            updateGameDimensions();
+            initializePaddles();
+            initializeBall();
+        });
+        
+        // Initialize the game
+        window.addEventListener('load', () => {
+            updateGameDimensions();
+            initializePaddles();
+            initializeBall();
+            showGameMessage('Welcome to Pong!');
+            startButton.addEventListener('click', startGame);
+        });
+    </script>
+</body>
+</html>
