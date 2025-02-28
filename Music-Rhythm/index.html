@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Rhythm Clicker</title>
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Rajdhani', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #000 url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzPgogICAgPHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxwYXRoIGQ9Ik0gNTAgMCBMIDAgMCAwIDUwIiBmaWxsPSJub25lIiBzdHJva2U9IiMwYzRhNmUiIHN0cm9rZS13aWR0aD0iMC41Ii8+CiAgICA8L3BhdHRlcm4+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMwMDEyMjAiLz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+Cjwvc3ZnPg==') center/cover no-repeat fixed;
+    color: #ecf0ff;
+    overflow: hidden;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(0, 149, 255, 0.15), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.container {
+    width: 800px;
+    max-width: 95vw;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(4px);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 40px rgba(0, 124, 255, 0.2);
+    background: rgba(11, 19, 30, 0.7);
+    border: 1px solid rgba(0, 124, 255, 0.3);
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #00ccff;
+    text-shadow: 0 0 10px rgba(0, 204, 255, 0.7),
+                 0 0 20px rgba(0, 204, 255, 0.4);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #00ccff, transparent);
+}
+
+.game-area {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    border-radius: 10px;
+    background: linear-gradient(to bottom, rgba(0, 21, 41, 0.9), rgba(2, 30, 58, 0.9));
+    margin-bottom: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 124, 255, 0.5);
+    box-shadow: inset 0 0 30px rgba(0, 124, 255, 0.15);
+}
+
+.game-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(90deg, transparent 95%, rgba(0, 124, 255, 0.1) 100%),
+        linear-gradient(transparent 95%, rgba(0, 124, 255, 0.1) 100%);
+    background-size: 20px 20px;
+    pointer-events: none;
+}
+
+.target-line {
+    position: absolute;
+    bottom: 80px;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 0, 102, 0.3) 10%, 
+                rgba(255, 0, 102, 1) 50%,
+                rgba(255, 0, 102, 0.3) 90%,
+                transparent 100%);
+    z-index: 5;
+    box-shadow: 0 0 10px 3px rgba(255, 0, 102, 0.5);
+}
+
+.target-zone {
+    position: absolute;
+    bottom: 70px;
+    width: 100%;
+    height: 24px;
+    background: rgba(255, 0, 102, 0.1);
+    border-top: 1px solid rgba(255, 0, 102, 0.3);
+    border-bottom: 1px solid rgba(255, 0, 102, 0.3);
+    z-index: 2;
+}
+
+.note {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 231, 255, 0.9), rgba(0, 126, 255, 0.8) 60%, rgba(0, 89, 255, 0.7));
+    box-shadow: 0 0 15px 5px rgba(0, 187, 255, 0.6),
+                inset 0 0 10px 2px rgba(255, 255, 255, 0.4);
+    transform: translateX(-50%);
+    z-index: 10;
+    backdrop-filter: blur(2px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.note::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40%;
+    height: 40%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    filter: blur(3px);
+}
+
+.note::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: inset 0 0 5px 2px rgba(255, 255, 255, 0.3);
+    animation: pulseNote 2s infinite;
+}
+
+@keyframes pulseNote {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.hit-animation {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9), rgba(0, 231, 255, 0.5) 30%, rgba(255, 0, 102, 0.2) 70%, transparent);
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 15;
+    pointer-events: none;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    background: linear-gradient(135deg, #2f78ff, #00c3ff);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px rgba(0, 156, 255, 0.5),
+                inset 0 0 3px rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #005eff, #00daff);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(0, 156, 255, 0.7),
+                inset 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 80%);
+    transform: rotate(45deg);
+    transition: all 0.3s;
+    opacity: 0;
+}
+
+.btn:hover::before {
+    opacity: 1;
+    animation: btnShine 1.5s infinite;
+}
+
+@keyframes btnShine {
+    0% { transform: rotate(45deg) translateY(0); opacity: 0; }
+    30% { opacity: 1; }
+    100% { transform: rotate(45deg) translateY(100%); opacity: 0; }
+}
+
+.btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 0 10px rgba(0, 156, 255, 0.4);
+}
+
+.score-panel {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    background: rgba(2, 23, 42, 0.7);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 124, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 124, 255, 0.15),
+                inset 0 0 10px rgba(0, 124, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.score-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+                rgba(0, 124, 255, 0.1) 0%, 
+                transparent 20%, 
+                transparent 80%, 
+                rgba(0, 124, 255, 0.1) 100%);
+    pointer-events: none;
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+.score-label {
+    font-size: 0.9rem;
+    color: #7eafff;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.score-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    color: #00ccff;
+    text-shadow: 0 0 5px rgba(0, 204, 255, 0.6);
+}
+
+.combo-meter {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.5rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    color: #ffcc00;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.7),
+                 0 0 20px rgba(255, 204, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.feedback {
+    position: absolute;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: 'Orbitron', sans-serif;
+    opacity: 0;
+    transition: all 0.3s;
+    letter-spacing: 2px;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.feedback.perfect {
+    color: #00ffaa;
+    text-shadow: 0 0 15px rgba(0, 255, 170, 0.8);
+}
+
+.feedback.good {
+    color: #00ccff;
+    text-shadow: 0 0 15px rgba(0, 204, 255, 0.8);
+}
+
+.feedback.ok {
+    color: #ffcc00;
+    text-shadow: 0 0 15px rgba(255, 204, 0, 0.8);
+}
+
+.feedback.miss {
+    color: #ff3366;
+    text-shadow: 0 0 15px rgba(255, 51, 102, 0.8);
+}
+
+.instructions {
+    margin-top: 20px;
+    color: #8ebbff;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding: 15px;
+    background: rgba(2, 23, 42, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 124, 255, 0.2);
+}
+
+.difficulty-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.difficulty-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(2, 23, 42, 0.7);
+    border: 1px solid rgba(0, 124, 255, 0.3);
+    color: #8ebbff;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.difficulty-btn:hover {
+    background: rgba(0, 124, 255, 0.2);
+    border-color: rgba(0, 204, 255, 0.5);
+    color: #00ccff;
+}
+
+.difficulty-btn.active {
+    background: linear-gradient(to right, rgba(0, 102, 255, 0.7), rgba(0, 204, 255, 0.7));
+    border-color: rgba(0, 231, 255, 0.8);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0, 156, 255, 0.5);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Results Dialog Styles */
+.results-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 18, 32, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.results-dialog {
+    width: 500px;
+    max-width: 90%;
+    background: linear-gradient(135deg, rgba(2, 30, 58, 0.9), rgba(0, 21, 41, 0.9));
+    border-radius: 15px;
+    box-shadow: 0 0 50px rgba(0, 156, 255, 0.4),
+                inset 0 0 20px rgba(0, 156, 255, 0.2);
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+    border: 1px solid rgba(0, 156, 255, 0.3);
+    position: relative;
+}
+
+.results-dialog::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 50% 0%, rgba(0, 156, 255, 0.15), transparent 70%),
+        radial-gradient(circle at 50% 100%, rgba(0, 156, 255, 0.15), transparent 70%);
+    pointer-events: none;
+}
+
+.results-header {
+    padding: 20px;
+    background: linear-gradient(to right, rgba(0, 102, 255, 0.8), rgba(0, 204, 255, 0.8));
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.results-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.2), transparent 70%);
+    animation: headerGlow 3s infinite;
+}
+
+@keyframes headerGlow {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.results-title {
+    font-size: 2rem;
+    font-family: 'Orbitron', sans-serif;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
+                 0 0 10px rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.results-content {
+    padding: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+.results-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 156, 255, 0.2);
+    position: relative;
+}
+
+.results-stat:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-size: 1.2rem;
+    font-family: 'Rajdhani', sans-serif;
+    color: #8ebbff;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 5px rgba(0, 204, 255, 0.6);
+}
+
+.results-grade {
+    text-align: center;
+    padding: 20px 0 30px;
+    position: relative;
+}
+
+.results-grade::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 156, 255, 0.5), transparent);
+}
+
+.results-grade::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 156, 255, 0.5), transparent);
+}
+
+.grade-label {
+    font-size: 1.2rem;
+    font-family: 'Rajdhani', sans-serif;
+    color: #8ebbff;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.grade-value {
+    font-size: 5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    text-shadow: 0 0 20px currentColor;
+    position: relative;
+    display: inline-block;
+}
+
+.grade-value::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    z-index: -1;
+}
+
+.grade-S {
+    color: #ffcc00;
+    animation: gradeGlowS 2s infinite alternate;
+}
+
+@keyframes gradeGlowS {
+    0% { text-shadow: 0 0 10px rgba(255, 204, 0, 0.7), 0 0 20px rgba(255, 204, 0, 0.4); }
+    100% { text-shadow: 0 0 20px rgba(255, 204, 0, 0.9), 0 0 40px rgba(255, 204, 0, 0.6); }
+}
+
+.grade-A {
+    color: #00ffaa;
+    animation: gradeGlowA 2s infinite alternate;
+}
+
+@keyframes gradeGlowA {
+    0% { text-shadow: 0 0 10px rgba(0, 255, 170, 0.7), 0 0 20px rgba(0, 255, 170, 0.4); }
+    100% { text-shadow: 0 0 20px rgba(0, 255, 170, 0.9), 0 0 40px rgba(0, 255, 170, 0.6); }
+}
+
+.grade-B {
+    color: #00ccff;
+    animation: gradeGlowB 2s infinite alternate;
+}
+
+@keyframes gradeGlowB {
+    0% { text-shadow: 0 0 10px rgba(0, 204, 255, 0.7), 0 0 20px rgba(0, 204, 255, 0.4); }
+    100% { text-shadow: 0 0 20px rgba(0, 204, 255, 0.9), 0 0 40px rgba(0, 204, 255, 0.6); }
+}
+
+.grade-C {
+    color: #ff9900;
+    animation: gradeGlowC 2s infinite alternate;
+}
+
+@keyframes gradeGlowC {
+    0% { text-shadow: 0 0 10px rgba(255, 153, 0, 0.7), 0 0 20px rgba(255, 153, 0, 0.4); }
+    100% { text-shadow: 0 0 20px rgba(255, 153, 0, 0.9), 0 0 40px rgba(255, 153, 0, 0.6); }
+}
+
+.grade-D {
+    color: #ff3366;
+    animation: gradeGlowD 2s infinite alternate;
+}
+
+@keyframes gradeGlowD {
+    0% { text-shadow: 0 0 10px rgba(255, 51, 102, 0.7), 0 0 20px rgba(255, 51, 102, 0.4); }
+    100% { text-shadow: 0 0 20px rgba(255, 51, 102, 0.9), 0 0 40px rgba(255, 51, 102, 0.6); }
+}
+
+.results-actions {
+    display: flex;
+    justify-content: center;
+    padding: 0 30px 30px;
+}
+
+.results-btn {
+    padding: 12px 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #0072ff, #00d4ff);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(0, 156, 255, 0.5),
+                inset 0 0 3px rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.results-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 80%);
+    transform: rotate(45deg);
+    transition: all 0.3s;
+    opacity: 0;
+}
+
+.results-btn:hover {
+    background: linear-gradient(135deg, #005eff, #00eeff);
+    transform: translateY(-3px);
+    box-shadow: 0 0 20px rgba(0, 156, 255, 0.7),
+                inset 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.results-btn:hover::before {
+    opacity: 1;
+    animation: btnShine 1.5s infinite;
+}
+
+.results-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 0 10px rgba(0, 156, 255, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .game-area {
+        height: 350px;
+    }
+    
+    .score-value {
+        font-size: 1.5rem;
+    }
+    
+    .feedback {
+        font-size: 1.7rem;
+    }
+    
+    .grade-value {
+        font-size: 4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .score-panel {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .score-item {
+        flex: 1 0 30%;
+    }
+    
+    .score-label {
+        font-size: 0.8rem;
+    }
+    
+    .score-value {
+        font-size: 1.3rem;
+    }
+    
+    .feedback {
+        font-size: 1.5rem;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Music Rhythm Clicker</h1>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+            <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+            <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        </div>
+        
+        <div class="controls">
+            <button id="start-btn" class="btn">Start Game</button>
+        </div>
+        
+        <div class="game-area">
+            <div class="target-zone"></div>
+            <div class="target-line"></div>
+            <div class="combo-meter">0x</div>
+            <div class="feedback"></div>
+        </div>
+        
+        <div class="score-panel">
+            <div class="score-item">
+                <span class="score-label">Score</span>
+                <span id="score" class="score-value">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Perfect</span>
+                <span id="perfect-hits" class="score-value">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Good</span>
+                <span id="good-hits" class="score-value">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">OK</span>
+                <span id="ok-hits" class="score-value">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Miss</span>
+                <span id="misses" class="score-value">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Max Combo</span>
+                <span id="max-combo" class="score-value">0</span>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <p>Press SPACE or click when the circles reach the red line to score points!</p>
+            <p>The closer your timing is to perfect, the more points you'll get.</p>
+        </div>
+    </div>
+    
+    <!-- Results Dialog -->
+    <div class="results-overlay" id="results-overlay">
+        <div class="results-dialog">
+            <div class="results-header">
+                <h2 class="results-title">Game Results</h2>
+            </div>
+            <div class="results-content">
+                <div class="results-grade">
+                    <div class="grade-label">Performance Grade</div>
+                    <div class="grade-value" id="grade-display">S</div>
+                </div>
+                <div class="results-stat">
+                    <div class="stat-label">Final Score</div>
+                    <div class="stat-value" id="final-score">0</div>
+                </div>
+                <div class="results-stat">
+                    <div class="stat-label">Max Combo</div>
+                    <div class="stat-value" id="final-combo">0</div>
+                </div>
+                <div class="results-stat">
+                    <div class="stat-label">Perfect Hits</div>
+                    <div class="stat-value" id="final-perfect">0</div>
+                </div>
+                <div class="results-stat">
+                    <div class="stat-label">Good Hits</div>
+                    <div class="stat-value" id="final-good">0</div>
+                </div>
+                <div class="results-stat">
+                    <div class="stat-label">OK Hits</div>
+                    <div class="stat-value" id="final-ok">0</div>
+                </div>
+                <div class="results-stat">
+                    <div class="stat-label">Misses</div>
+                    <div class="stat-value" id="final-misses">0</div>
+                </div>
+            </div>
+            <div class="results-actions">
+                <button class="results-btn" id="close-results-btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const gameArea = document.querySelector('.game-area');
+        const targetLine = document.querySelector('.target-line');
+        const startButton = document.getElementById('start-btn');
+        const scoreElement = document.getElementById('score');
+        const perfectHitsElement = document.getElementById('perfect-hits');
+        const goodHitsElement = document.getElementById('good-hits');
+        const okHitsElement = document.getElementById('ok-hits');
+        const missesElement = document.getElementById('misses');
+        const maxComboElement = document.getElementById('max-combo');
+        const comboMeter = document.querySelector('.combo-meter');
+        const feedbackElement = document.querySelector('.feedback');
+        const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+        
+        // Results elements
+        const resultsOverlay = document.getElementById('results-overlay');
+        const gradeDisplay = document.getElementById('grade-display');
+        const finalScoreElement = document.getElementById('final-score');
+        const finalComboElement = document.getElementById('final-combo');
+        const finalPerfectElement = document.getElementById('final-perfect');
+        const finalGoodElement = document.getElementById('final-good');
+        const finalOkElement = document.getElementById('final-ok');
+        const finalMissesElement = document.getElementById('final-misses');
+        const closeResultsButton = document.getElementById('close-results-btn');
+        
+        // Game state
+        let gameRunning = false;
+        let audioContext;
+        let audioBuffer;
+        let audioSource;
+        let analyser;
+        let dataArray;
+        let beatDetector;
+        let score = 0;
+        let perfectHits = 0;
+        let goodHits = 0;
+        let okHits = 0;
+        let misses = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let beatIndex = 0;
+        let gameStartTime;
+        let noteSpeed = 300; // pixels per second
+        let notes = [];
+        let beatTimes = [];
+        let lastBeatTime = 0;
+        let difficulty = 'easy';
+        let difficultySettings = {
+            easy: { bpm: 80, tolerance: 200 },
+            medium: { bpm: 100, tolerance: 150 },
+            hard: { bpm: 120, tolerance: 100 }
+        };
+        
+        // Audio URL
+        const AUDIO_URL = 'https://cdn.freesound.org/previews/270/270402_5123851-lq.mp3';
+        
+        // Initialize the game
+        function initGame() {
+            // Reset game state
+            score = 0;
+            perfectHits = 0;
+            goodHits = 0;
+            okHits = 0;
+            misses = 0;
+            combo = 0;
+            maxCombo = 0;
+            beatIndex = 0;
+            notes = [];
+            
+            // Update UI
+            scoreElement.textContent = '0';
+            perfectHitsElement.textContent = '0';
+            goodHitsElement.textContent = '0';
+            okHitsElement.textContent = '0';
+            missesElement.textContent = '0';
+            maxComboElement.textContent = '0';
+            
+            // Clean up existing notes
+            gameArea.querySelectorAll('.note').forEach(note => note.remove());
+            
+            // Calculate beat times based on BPM
+            generateBeats();
+        }
+        
+        // Generate beat times based on BPM
+        function generateBeats() {
+            const bpm = difficultySettings[difficulty].bpm;
+            const beatInterval = 60 / bpm; // seconds per beat
+            
+            beatTimes = [];
+            
+            // Create beats for approximately 2 minutes of gameplay
+            for (let i = 0; i < 120; i++) {
+                beatTimes.push(i * beatInterval);
+            }
+        }
+        
+        // Start the game
+        async function startGame() {
+            if (gameRunning) return;
+            
+            initGame();
+            
+            gameRunning = true;
+            startButton.textContent = 'Restart Game';
+            
+            try {
+                // Initialize audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Load and decode audio file
+                const response = await fetch(AUDIO_URL);
+                const arrayBuffer = await response.arrayBuffer();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Create audio source
+                audioSource = audioContext.createBufferSource();
+                audioSource.buffer = audioBuffer;
+                
+                // Create analyser
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                
+                // Connect audio nodes
+                audioSource.connect(analyser);
+                analyser.connect(audioContext.destination);
+                
+                // Start audio playback
+                audioSource.start(0);
+                gameStartTime = audioContext.currentTime;
+                
+                // Start game loop
+                requestAnimationFrame(gameLoop);
+            } catch (error) {
+                console.error('Error starting game:', error);
+                gameRunning = false;
+                startButton.textContent = 'Start Game';
+                alert('Failed to load audio. Please try again.');
+            }
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!gameRunning) return;
+            
+            const currentTime = audioContext.currentTime - gameStartTime;
+            
+            // Check if we need to spawn a new note
+            while (beatIndex < beatTimes.length && beatTimes[beatIndex] <= currentTime + (gameArea.clientHeight / noteSpeed)) {
+                spawnNote(beatTimes[beatIndex]);
+                beatIndex++;
+            }
+            
+            // Update notes positions
+            updateNotes(currentTime);
+            
+            // Check for missed notes
+            checkMissedNotes(currentTime);
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+            
+            // Check if audio has ended
+            if (currentTime >= audioBuffer.duration) {
+                endGame();
+            }
+        }
+        
+        // Spawn a new note
+        function spawnNote(beatTime) {
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.style.left = '50%';
+            note.style.bottom = `${gameArea.clientHeight}px`;
+            note.dataset.beatTime = beatTime;
+            note.dataset.clicked = 'false';
+            
+            gameArea.appendChild(note);
+            notes.push(note);
+        }
+        
+        // Update notes positions
+        function updateNotes(currentTime) {
+            notes.forEach(note => {
+                const beatTime = parseFloat(note.dataset.beatTime);
+                const timeUntilBeat = beatTime - currentTime;
+                
+                // Calculate position based on time until beat
+                const position = gameArea.clientHeight - (timeUntilBeat * noteSpeed);
+                note.style.bottom = `${position}px`;
+            });
+        }
+        
+        // Check for missed notes
+        function checkMissedNotes(currentTime) {
+            const targetLinePosition = parseFloat(getComputedStyle(targetLine).bottom);
+            
+            notes.forEach(note => {
+                const beatTime = parseFloat(note.dataset.beatTime);
+                if (note.dataset.clicked === 'false' && currentTime - beatTime > 0.2) {
+                    // Note is missed
+                    note.dataset.clicked = 'true';
+                    note.style.opacity = '0.3';
+                    
+                    // Update stats
+                    misses++;
+                    missesElement.textContent = misses;
+                    
+                    // Reset combo
+                    combo = 0;
+                    comboMeter.style.opacity = '0';
+                    
+                    // Show miss feedback
+                    showFeedback('MISS', 'miss');
+                }
+            });
+            
+            // Remove old notes
+            notes = notes.filter(note => {
+                const beatTime = parseFloat(note.dataset.beatTime);
+                if (currentTime - beatTime > 1) {
+                    note.remove();
+                    return false;
+                }
+                return true;
+            });
+        }
+        
+        // Handle click/keypress
+        function handleClick() {
+            if (!gameRunning) return;
+            
+            const currentTime = audioContext.currentTime - gameStartTime;
+            
+            // Find the closest note to the target line
+            let closestNote = null;
+            let closestDistance = Infinity;
+            
+            notes.forEach(note => {
+                if (note.dataset.clicked === 'false') {
+                    const beatTime = parseFloat(note.dataset.beatTime);
+                    const distance = Math.abs(currentTime - beatTime);
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestNote = note;
+                    }
+                }
+            });
+            
+            // Check if a note was found within tolerance
+            const tolerance = difficultySettings[difficulty].tolerance / 1000; // convert ms to seconds
+            
+            if (closestNote && closestDistance <= tolerance) {
+                closestNote.dataset.clicked = 'true';
+                
+                // Create hit animation
+                createHitAnimation(closestNote);
+                
+                // Calculate score based on timing accuracy
+                let hitScore = 0;
+                let hitType = '';
+                
+                if (closestDistance < 0.05) { // Perfect hit (within 50ms)
+                    hitScore = 100;
+                    hitType = 'PERFECT';
+                    perfectHits++;
+                    perfectHitsElement.textContent = perfectHits;
+                    showFeedback(hitType, 'perfect');
+                } else if (closestDistance < 0.1) { // Good hit (within 100ms)
+                    hitScore = 50;
+                    hitType = 'GOOD';
+                    goodHits++;
+                    goodHitsElement.textContent = goodHits;
+                    showFeedback(hitType, 'good');
+                } else { // OK hit
+                    hitScore = 20;
+                    hitType = 'OK';
+                    okHits++;
+                    okHitsElement.textContent = okHits;
+                    showFeedback(hitType, 'ok');
+                }
+                
+                // Update combo
+                combo++;
+                maxCombo = Math.max(combo, maxCombo);
+                maxComboElement.textContent = maxCombo;
+                
+                // Apply combo multiplier
+                const comboMultiplier = Math.min(Math.floor(combo / 10) + 1, 5);
+                hitScore *= comboMultiplier;
+                
+                // Update score
+                score += hitScore;
+                scoreElement.textContent = score;
+                
+                // Show combo
+                comboMeter.textContent = `${combo}x`;
+                comboMeter.style.opacity = '1';
+                
+                // Make the note disappear
+                closestNote.style.transform = 'translateX(-50%) scale(1.5)';
+                closestNote.style.opacity = '0';
+                setTimeout(() => {
+                    closestNote.remove();
+                }, 300);
+            } else {
+                // Missed click (no note within tolerance)
+                showFeedback('MISS', 'miss');
+                combo = 0;
+                comboMeter.style.opacity = '0';
+            }
+        }
+        
+        // Create hit animation
+        function createHitAnimation(note) {
+            const hitAnimation = document.createElement('div');
+            hitAnimation.className = 'hit-animation';
+            
+            const noteRect = note.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            
+            const x = noteRect.left + noteRect.width / 2 - gameAreaRect.left;
+            const y = noteRect.top + noteRect.height / 2 - gameAreaRect.top;
+            
+            hitAnimation.style.left = `${x}px`;
+            hitAnimation.style.top = `${y}px`;
+            
+            gameArea.appendChild(hitAnimation);
+            
+            // Animate and remove
+            requestAnimationFrame(() => {
+                hitAnimation.style.transform = 'translate(-50%, -50%) scale(2)';
+                hitAnimation.style.opacity = '0';
+                setTimeout(() => {
+                    hitAnimation.remove();
+                }, 300);
+            });
+        }
+        
+        // Show feedback
+        function showFeedback(text, type) {
+            feedbackElement.textContent = text;
+            feedbackElement.className = `feedback ${type}`;
+            feedbackElement.style.opacity = '1';
+            feedbackElement.style.transform = 'translateX(-50%) translateY(-20px)';
+            
+            setTimeout(() => {
+                feedbackElement.style.opacity = '0';
+                feedbackElement.style.transform = 'translateX(-50%) translateY(0)';
+            }, 500);
+        }
+        
+        // Calculate performance grade
+        function calculateGrade() {
+            const totalNotes = perfectHits + goodHits + okHits + misses;
+            if (totalNotes === 0) return 'D';
+            
+            const accuracy = (perfectHits * 1 + goodHits * 0.6 + okHits * 0.3) / totalNotes;
+            const comboFactor = maxCombo / totalNotes;
+            
+            const perfScore = accuracy * 0.7 + comboFactor * 0.3;
+            
+            if (perfScore >= 0.95) return 'S';
+            if (perfScore >= 0.85) return 'A';
+            if (perfScore >= 0.7) return 'B';
+            if (perfScore >= 0.5) return 'C';
+            return 'D';
+        }
+        
+        // Show results dialog
+        function showResultsDialog() {
+            // Update results data
+            const grade = calculateGrade();
+            
+            gradeDisplay.textContent = grade;
+            gradeDisplay.className = `grade-value grade-${grade}`;
+            
+            finalScoreElement.textContent = score;
+            finalComboElement.textContent = maxCombo;
+            finalPerfectElement.textContent = perfectHits;
+            finalGoodElement.textContent = goodHits;
+            finalOkElement.textContent = okHits;
+            finalMissesElement.textContent = misses;
+            
+            // Show dialog
+            resultsOverlay.style.opacity = '1';
+            resultsOverlay.style.pointerEvents = 'auto';
+            
+            setTimeout(() => {
+                document.querySelector('.results-dialog').style.transform = 'translateY(0)';
+            }, 10);
+        }
+        
+        // Hide results dialog
+        function hideResultsDialog() {
+            document.querySelector('.results-dialog').style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                resultsOverlay.style.opacity = '0';
+                resultsOverlay.style.pointerEvents = 'none';
+            }, 300);
+        }
+        
+        // End game
+        function endGame() {
+            gameRunning = false;
+            
+            if (audioSource) {
+                audioSource.stop();
+            }
+            
+            startButton.textContent = 'Play Again';
+            
+            // Show results dialog
+            showResultsDialog();
+        }
+        
+        // Set up event listeners
+        startButton.addEventListener('click', startGame);
+        
+        // Listen for clicks on the game area
+        gameArea.addEventListener('click', handleClick);
+        
+        // Listen for keypresses (spacebar)
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                handleClick();
+            }
+        });
+        
+        // Close results button
+        closeResultsButton.addEventListener('click', () => {
+            hideResultsDialog();
+        });
+        
+        // Set up difficulty selection
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                difficultyButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Set difficulty
+                difficulty = button.dataset.difficulty;
+            });
+        });
+    </script>
+</body>
+</html>
