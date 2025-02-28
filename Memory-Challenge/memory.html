@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Memory Challenge</title>
+<style>
+    body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+.container {
+    text-align: center;
+    max-width: 650px;
+    padding: 25px;
+    background: rgba(15, 23, 42, 0.7);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 25%,
+        transparent 50%
+    );
+    transform: rotate(30deg);
+    pointer-events: none;
+    z-index: 0;
+}
+
+h1 {
+    color: #ffffff;
+    margin-bottom: 25px;
+    font-weight: 700;
+    font-size: 2.5rem;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, #4CAF50, #2196F3);
+    border-radius: 3px;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    padding: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.level, .score, .lives, .time, .high-score, .streak {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin: 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.level span, .score span, .lives span, .time span, .high-score span, .streak span {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 5px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.streak {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 10px 20px;
+    margin: 0 auto 20px;
+    width: fit-content;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 15px;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+.cell {
+    width: 110px;
+    height: 110px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.cell::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.cell:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.cell.flash {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.7);
+    z-index: 10;
+}
+
+.btn {
+    padding: 14px 35px;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #4CAF50, #2196F3);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 5px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #45a049, #1a88e0);
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn:disabled {
+    background: linear-gradient(135deg, #777777, #555555);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled::before {
+    display: none;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.modal-content {
+    background: rgba(15, 23, 42, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: scale(0.9);
+    animation: modalAppear 0.5s forwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-content::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0.05) 0%,
+        transparent 70%
+    );
+    transform: rotate(30deg);
+    pointer-events: none;
+}
+
+@keyframes modalAppear {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-title {
+    font-size: 28px;
+    margin-bottom: 25px;
+    color: #ffffff;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    display: inline-block;
+}
+
+.modal-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #4CAF50, #2196F3);
+    border-radius: 3px;
+}
+
+.modal-text {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #e0e0e0;
+    line-height: 1.6;
+}
+
+.timer-bar {
+    width: 100%;
+    height: 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin-bottom: 25px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.timer-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #2196F3);
+    width: 100%;
+    transition: width linear;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    border-radius: 6px;
+}
+
+.achievement {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #4CAF50, #2196F3);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateX(100px);
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 1001;
+    max-width: 300px;
+}
+
+.achievement.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.achievement strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.achievement p {
+    margin: 5px 0 0;
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.game-modes {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.option-select {
+    padding: 12px 18px;
+    margin: 5px;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 35px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+.option-select:focus {
+    outline: none;
+    border-color: rgba(76, 175, 80, 0.5);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.option-select:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8), 0 0 30px rgba(33, 150, 243, 0.6); }
+    100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
+}
+
+/* Responsive styles */
+@media (max-width: 700px) {
+    .container {
+        padding: 15px;
+        width: 90%;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .game-info {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .level, .score, .lives, .high-score {
+        margin: 5px;
+    }
+    
+    .grid {
+        grid-gap: 10px;
+    }
+    
+    .cell {
+        width: 85px;
+        height: 85px;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        font-size: 14px;
+    }
+    
+    .game-modes {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .option-select {
+        width: 80%;
+    }
+}
+
+@media (max-width: 500px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 8px;
+    }
+    
+    .cell {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        font-size: 13px;
+        margin: 3px;
+    }
+    
+    .modal-content {
+        padding: 25px;
+        width: 85%;
+    }
+    
+    .modal-title {
+        font-size: 22px;
+    }
+    
+    .modal-text {
+        font-size: 16px;
+    }
+}
+
+/* Additional special effects */
+#start-btn, #play-again-btn {
+    animation: pulse 2s infinite;
+}
+
+.lives span {
+    color: #FF5252;
+    text-shadow: 0 0 8px rgba(255, 82, 82, 0.5);
+}
+
+.score span, .high-score span {
+    color: #4CAF50;
+    text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+.level span {
+    color: #2196F3;
+    text-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+}
+
+/* Customize scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #4CAF50, #2196F3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #45a049, #1a88e0);
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Color Memory Challenge</h1>
+        
+        <div class="game-modes">
+            <select id="difficulty-select" class="option-select">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+                <option value="extreme">Extreme</option>
+            </select>
+            
+            <select id="game-mode-select" class="option-select">
+                <option value="classic">Classic Mode</option>
+                <option value="reverse">Reverse Mode</option>
+                <option value="timed">Timed Mode</option>
+                <option value="sudden">Sudden Death</option>
+            </select>
+        </div>
+        
+        <div class="game-info">
+            <div class="level">Level: <span id="level">1</span></div>
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="lives">Lives: <span id="lives">3</span></div>
+            <div class="high-score">Best: <span id="high-score">0</span></div>
+        </div>
+        
+        <div class="streak">Streak: <span id="streak">0</span></div>
+        
+        <div id="timer-container" style="display: none;">
+            <div class="time">Time: <span id="time">0</span></div>
+            <div class="timer-bar">
+                <div id="timer-progress" class="timer-progress"></div>
+            </div>
+        </div>
+        
+        <div id="grid" class="grid">
+            <!-- Grid cells will be dynamically generated -->
+        </div>
+        
+        <button id="start-btn" class="btn">Start Game</button>
+        <button id="next-level-btn" class="btn" style="display: none;">Next Level</button>
+        <button id="hint-btn" class="btn" style="display: none;">Use Hint</button>
+    </div>
+    
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Game Over!</div>
+            <div class="modal-text">
+                You reached level <span id="final-level">0</span> with a score of <span id="final-score">0</span>.
+            </div>
+            <div class="modal-text">
+                High Score: <span id="modal-high-score">0</span>
+            </div>
+            <div class="modal-text" id="achievement-text" style="display: none;">
+                New Achievement Unlocked: <span id="achievement-name"></span>
+            </div>
+            <button id="play-again-btn" class="btn">Play Again</button>
+        </div>
+    </div>
+    
+    <div id="achievement-popup" class="achievement">
+        <strong>Achievement Unlocked!</strong>
+        <p id="achievement-popup-text"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game variables
+            let level = 1;
+            let score = 0;
+            let lives = 3;
+            let streak = 0;
+            let sequence = [];
+            let playerSequence = [];
+            let isPlaying = false;
+            let canClick = false;
+            let timerInterval = null;
+            let timeLeft = 0;
+            let hintsRemaining = 1;
+            let highScore = localStorage.getItem('highScore') || 0;
+            let gameMode = 'classic';
+            let difficulty = 'medium';
+            let achievements = JSON.parse(localStorage.getItem('achievements')) || {};
+            const gridSize = 9; // 3x3 grid
+            const colors = [
+                '#FF5252', // Red
+                '#4CAF50', // Green
+                '#2196F3', // Blue
+                '#FFC107', // Yellow
+                '#9C27B0', // Purple
+                '#FF9800', // Orange
+                '#00BCD4', // Cyan
+                '#795548', // Brown
+                '#607D8B'  // Gray-blue
+            ];
+            
+            // DOM elements
+            const grid = document.getElementById('grid');
+            const startBtn = document.getElementById('start-btn');
+            const nextLevelBtn = document.getElementById('next-level-btn');
+            const hintBtn = document.getElementById('hint-btn');
+            const levelDisplay = document.getElementById('level');
+            const scoreDisplay = document.getElementById('score');
+            const livesDisplay = document.getElementById('lives');
+            const streakDisplay = document.getElementById('streak');
+            const highScoreDisplay = document.getElementById('high-score');
+            const gameOverModal = document.getElementById('game-over-modal');
+            const finalLevelDisplay = document.getElementById('final-level');
+            const finalScoreDisplay = document.getElementById('final-score');
+            const modalHighScoreDisplay = document.getElementById('modal-high-score');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const difficultySelect = document.getElementById('difficulty-select');
+            const gameModeSelect = document.getElementById('game-mode-select');
+            const timerContainer = document.getElementById('timer-container');
+            const timeDisplay = document.getElementById('time');
+            const timerProgress = document.getElementById('timer-progress');
+            const achievementPopup = document.getElementById('achievement-popup');
+            const achievementPopupText = document.getElementById('achievement-popup-text');
+            const achievementText = document.getElementById('achievement-text');
+            const achievementName = document.getElementById('achievement-name');
+            
+            // Initialize high score display
+            highScoreDisplay.textContent = highScore;
+            
+            // Create grid cells
+            function createGrid() {
+                grid.innerHTML = '';
+                for (let i = 0; i < gridSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.backgroundColor = colors[i];
+                    cell.style.opacity = '0.6';
+                    cell.dataset.index = i;
+                    
+                    cell.addEventListener('click', () => {
+                        if (canClick) {
+                            cellClicked(i);
+                        }
+                    });
+                    
+                    grid.appendChild(cell);
+                }
+            }
+            
+            // Event listeners
+            startBtn.addEventListener('click', startGame);
+            
+            playAgainBtn.addEventListener('click', () => {
+                gameOverModal.style.display = 'none';
+                resetGame();
+                startGame();
+            });
+            
+            nextLevelBtn.addEventListener('click', () => {
+                nextLevelBtn.style.display = 'none';
+                hintBtn.style.display = 'none';
+                level++;
+                levelDisplay.textContent = level;
+                startRound();
+            });
+            
+            hintBtn.addEventListener('click', useHint);
+            
+            difficultySelect.addEventListener('change', function() {
+                difficulty = this.value;
+                resetGame();
+            });
+            
+            gameModeSelect.addEventListener('change', function() {
+                gameMode = this.value;
+                resetGame();
+                
+                // Show/hide timer based on game mode
+                if (gameMode === 'timed') {
+                    timerContainer.style.display = 'block';
+                } else {
+                    timerContainer.style.display = 'none';
+                }
+            });
+            
+            function startGame() {
+                resetGame();
+                startBtn.disabled = true;
+                
+                // Set lives based on game mode
+                if (gameMode === 'sudden') {
+                    lives = 1;
+                } else {
+                    lives = 3;
+                }
+                
+                livesDisplay.textContent = lives;
+                startRound();
+            }
+            
+            function resetGame() {
+                // Clear any existing timers
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                
+                level = 1;
+                score = 0;
+                streak = 0;
+                sequence = [];
+                playerSequence = [];
+                isPlaying = false;
+                canClick = false;
+                hintsRemaining = getHintsForDifficulty();
+                
+                levelDisplay.textContent = level;
+                scoreDisplay.textContent = score;
+                streakDisplay.textContent = streak;
+                startBtn.disabled = false;
+                nextLevelBtn.style.display = 'none';
+                hintBtn.style.display = 'none';
+                
+                // Reset timer display
+                if (gameMode === 'timed') {
+                    timerContainer.style.display = 'block';
+                } else {
+                    timerContainer.style.display = 'none';
+                }
+                
+                createGrid();
+            }
+            
+            function getHintsForDifficulty() {
+                switch (difficulty) {
+                    case 'easy': return 3;
+                    case 'medium': return 2;
+                    case 'hard': return 1;
+                    case 'extreme': return 0;
+                    default: return 1;
+                }
+            }
+            
+            function getTimerDuration() {
+                // Base time in seconds
+                let baseTime = 0;
+                
+                switch (difficulty) {
+                    case 'easy': baseTime = 10; break;
+                    case 'medium': baseTime = 8; break;
+                    case 'hard': baseTime = 6; break;
+                    case 'extreme': baseTime = 4; break;
+                    default: baseTime = 8;
+                }
+                
+                // Adjust for level (less time as levels increase)
+                return Math.max(baseTime - (level * 0.2), 2);
+            }
+            
+            function startRound() {
+                isPlaying = true;
+                playerSequence = [];
+                
+                // Add a new random color to the sequence
+                const randomIndex = Math.floor(Math.random() * gridSize);
+                sequence.push(randomIndex);
+                
+                // Show hint button if hints are available
+                if (hintsRemaining > 0) {
+                    hintBtn.textContent = `Use Hint (${hintsRemaining})`;
+                    hintBtn.style.display = 'inline-block';
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+                
+                // After a short delay, play the sequence
+                setTimeout(() => {
+                    playSequence();
+                }, 1000);
+            }
+            
+            function getSequenceDelay() {
+                // Get base delay based on difficulty
+                let baseDelay = 0;
+                switch (difficulty) {
+                    case 'easy': baseDelay = 800; break;
+                    case 'medium': baseDelay = 600; break;
+                    case 'hard': baseDelay = 400; break;
+                    case 'extreme': baseDelay = 300; break;
+                    default: baseDelay = 600;
+                }
+                
+                // Reduce delay as level increases
+                return Math.max(baseDelay - (level * 20), 200);
+            }
+            
+            function getFlashDuration() {
+                // Get base duration based on difficulty
+                let baseDuration = 0;
+                switch (difficulty) {
+                    case 'easy': baseDuration = 600; break;
+                    case 'medium': baseDuration = 500; break;
+                    case 'hard': baseDuration = 400; break;
+                    case 'extreme': baseDuration = 300; break;
+                    default: baseDuration = 500;
+                }
+                
+                // Reduce duration as level increases
+                return Math.max(baseDuration - (level * 15), 150);
+            }
+            
+            function playSequence() {
+                canClick = false;
+                
+                let i = 0;
+                const playOrder = gameMode === 'reverse' ? [...sequence].reverse() : sequence;
+                
+                const interval = setInterval(() => {
+                    // Flash the cell
+                    flashCell(playOrder[i]);
+                    
+                    i++;
+                    if (i >= playOrder.length) {
+                        clearInterval(interval);
+                        // Allow player to click after sequence is done
+                        setTimeout(() => {
+                            canClick = true;
+                            
+                            // Start timer if in timed mode
+                            if (gameMode === 'timed') {
+                                startTimer();
+                            }
+                        }, 500);
+                    }
+                }, getSequenceDelay());
+            }
+            
+            function startTimer() {
+                timeLeft = getTimerDuration();
+                timeDisplay.textContent = timeLeft.toFixed(1);
+                timerProgress.style.width = '100%';
+                
+                // Clear any existing timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                
+                const timerStep = 0.1; // Update every 100ms
+                const totalTime = timeLeft;
+                
+                timerProgress.style.transition = `width ${totalTime}s linear`;
+                timerProgress.style.width = '0%';
+                
+                timerInterval = setInterval(() => {
+                    timeLeft -= timerStep;
+                    timeDisplay.textContent = Math.max(0, timeLeft).toFixed(1);
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        
+                        // If player hasn't completed the sequence in time
+                        if (canClick) {
+                            loseLife("Time's up!");
+                        }
+                    }
+                }, timerStep * 1000);
+            }
+            
+            function flashCell(index) {
+                const cells = document.querySelectorAll('.cell');
+                const cell = cells[index];
+                
+                cell.classList.add('flash');
+                cell.style.opacity = '1';
+                
+                setTimeout(() => {
+                    cell.classList.remove('flash');
+                    cell.style.opacity = '0.6';
+                }, getFlashDuration());
+            }
+            
+            function cellClicked(index) {
+                const cells = document.querySelectorAll('.cell');
+                const cell = cells[index];
+                
+                // Flash the cell when clicked
+                cell.classList.add('flash');
+                cell.style.opacity = '1';
+                
+                setTimeout(() => {
+                    cell.classList.remove('flash');
+                    cell.style.opacity = '0.6';
+                }, 300);
+                
+                // Add to player sequence
+                playerSequence.push(index);
+                
+                // Determine which sequence to check against based on game mode
+                const sequenceToCheck = gameMode === 'reverse' ? [...sequence].reverse() : sequence;
+                
+                // Check if the player's choice is correct
+                const currentIndex = playerSequence.length - 1;
+                
+                if (playerSequence[currentIndex] !== sequenceToCheck[currentIndex]) {
+                    // Wrong choice
+                    loseLife("Wrong color!");
+                    return;
+                }
+                
+                // If player has completed the current sequence correctly
+                if (playerSequence.length === sequenceToCheck.length) {
+                    // Update score and streak
+                    streak++;
+                    updateStreak();
+                    
+                    // Calculate score based on difficulty and level
+                    const difficultyMultiplier = getDifficultyMultiplier();
+                    const levelBonus = level * 10;
+                    const streakBonus = streak > 3 ? streak * 5 : 0;
+                    
+                    const roundScore = levelBonus * difficultyMultiplier + streakBonus;
+                    score += roundScore;
+                    scoreDisplay.textContent = score;
+                    
+                    // Stop the timer if it's running
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                    
+                    // Prevent further clicks
+                    canClick = false;
+                    
+                    // Check for achievements
+                    checkAchievements();
+                    
+                    // Show next level button
+                    nextLevelBtn.style.display = 'inline-block';
+                    
+                    // Play a success sound
+                    playSound('success');
+                }
+            }
+            
+            function playSound(type) {
+                // Create audio element
+                const audio = new Audio();
+                
+                // Set sound based on type
+                switch(type) {
+                    case 'success':
+                        audio.src = 'data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAFAAAGUACFhYWFhYWFhYWFhYWFhYWFhYWFvb29vb29vb29vb29vb29vb29vb3p6enp6enp6enp6enp6enp6enp6f////////////////////////////////8AAAA8TEFNRTMuOTlyAc0AAAAAAAAAABSAJAJAQgAAgAAABlAIxGLiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQxAADwAABpAAAACAAADSAAAAETEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+                        break;
+                    case 'failure':
+                        audio.src = 'data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAAAJhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVXw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PD///////////////////////////////////////////8AAAA8TEFNRTMuOTlyAc0AAAAAAAAAABSAJAJAQgAAgAAABlAIxGLiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQxAADwAABpAAAACAAADSAAAAETEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+                        break;
+                }
+                
+                // Play the sound
+                audio.play().catch(e => {
+                    // Silently fail if playing sound is not allowed
+                    console.log('Sound play error:', e);
+                });
+            }
+            
+            function getDifficultyMultiplier() {
+                switch (difficulty) {
+                    case 'easy': return 1;
+                    case 'medium': return 1.5;
+                    case 'hard': return 2;
+                    case 'extreme': return 3;
+                    default: return 1;
+                }
+            }
+            
+            function updateStreak() {
+                streakDisplay.textContent = streak;
+                
+                // Check if we should award a streak bonus
+                if (streak % 5 === 0 && streak > 0) {
+                    // Bonus points for maintaining streak
+                    const streakBonus = streak * 10;
+                    score += streakBonus;
+                    scoreDisplay.textContent = score;
+                    
+                    // Show streak bonus achievement
+                    showAchievement(`Streak Bonus: +${streakBonus} points`);
+                }
+            }
+            
+            function loseLife(reason) {
+                lives--;
+                livesDisplay.textContent = lives;
+                
+                // Reset streak
+                streak = 0;
+                updateStreak();
+                
+                // Stop timer if running
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                
+                // Play failure sound
+                playSound('failure');
+                
+                if (lives <= 0) {
+                    // Game over
+                    gameOver();
+                } else {
+                    // Flash the correct sequence again and continue
+                    canClick = false;
+                    playerSequence = [];
+                    
+                    // Show the correct sequence after a brief delay
+                    setTimeout(() => {
+                        alert(reason + " Try again!");
+                        playSequence();
+                    }, 500);
+                }
+            }
+            
+            function useHint() {
+                if (hintsRemaining <= 0 || !canClick) return;
+                
+                hintsRemaining--;
+                hintBtn.textContent = `Use Hint (${hintsRemaining})`;
+                
+                if (hintsRemaining <= 0) {
+                    hintBtn.style.display = 'none';
+                }
+                
+                // Get the next color in the sequence
+                const nextIndex = playerSequence.length;
+                const sequenceToCheck = gameMode === 'reverse' ? [...sequence].reverse() : sequence;
+                
+                if (nextIndex < sequenceToCheck.length) {
+                    // Flash the next color in the sequence
+                    flashCell(sequenceToCheck[nextIndex]);
+                }
+            }
+            
+            function gameOver() {
+                isPlaying = false;
+                canClick = false;
+                
+                // Check if this is a new high score
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('highScore', highScore);
+                    highScoreDisplay.textContent = highScore;
+                    
+                    // Show high score achievement
+                    showAchievement('New High Score!');
+                }
+                
+                // Update final score and level display
+                finalLevelDisplay.textContent = level;
+                finalScoreDisplay.textContent = score;
+                modalHighScoreDisplay.textContent = highScore;
+                
+                // Check for level-based achievements
+                if (level >= 10 && !achievements.level10) {
+                    achievements.level10 = true;
+                    showAchievementInModal("Memory Master");
+                } else if (level >= 5 && !achievements.level5) {
+                    achievements.level5 = true;
+                    showAchievementInModal("Color Apprentice");
+                }
+                
+                // Save achievements
+                localStorage.setItem('achievements', JSON.stringify(achievements));
+                
+                // Show game over modal
+                gameOverModal.style.display = 'flex';
+                
+                // Enable start button
+                startBtn.disabled = false;
+            }
+            
+            function checkAchievements() {
+                // Check for streak achievements
+                if (streak >= 10 && !achievements.streak10) {
+                    achievements.streak10 = true;
+                    showAchievement("Perfect Memory: 10 Streak");
+                    localStorage.setItem('achievements', JSON.stringify(achievements));
+                }
+                
+                // Check for difficulty achievements
+                if (difficulty === 'extreme' && level >= 3 && !achievements.extremeLevel3) {
+                    achievements.extremeLevel3 = true;
+                    showAchievement("Extreme Memory: Reached level 3");
+                    localStorage.setItem('achievements', JSON.stringify(achievements));
+                }
+            }
+            
+            function showAchievement(text) {
+                achievementPopupText.textContent = text;
+                achievementPopup.classList.add('show');
+                
+                setTimeout(() => {
+                    achievementPopup.classList.remove('show');
+                }, 3000);
+            }
+            
+            function showAchievementInModal(name) {
+                achievementText.style.display = 'block';
+                achievementName.textContent = name;
+            }
+            
+            // Initialize the game
+            resetGame();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Dice Roller Game</title>
+<style>
+    :root {
+    --primary: #ff00ff;
+    --primary-dark: #cc00cc;
+    --secondary: #00ffff;
+    --background: #0a0a0a;
+    --surface: rgba(20, 20, 30, 0.8);
+    --error: #ff3300;
+    --text-primary: #ffffff;
+    --text-secondary: #00ffff;
+    --glow-primary: 0 0 10px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.5);
+    --glow-secondary: 0 0 10px #00ffff, 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+@keyframes backgroundPulse {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes flicker {
+    0% { opacity: 1; }
+    5% { opacity: 0.8; }
+    10% { opacity: 1; }
+    15% { opacity: 0.9; }
+    20% { opacity: 1; }
+    50% { opacity: 1; }
+    55% { opacity: 0.7; }
+    60% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+@keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+
+body {
+    background-color: var(--background);
+    background-image: 
+        radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        linear-gradient(to right, rgba(10, 10, 15, 0.9), rgba(20, 20, 35, 0.9));
+    background-size: 200% 200%, 200% 200%, 100% 100%;
+    animation: backgroundPulse 20s ease infinite;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Scanline effect */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to bottom, 
+        rgba(0, 255, 255, 0), 
+        rgba(0, 255, 255, 0.5), 
+        rgba(0, 255, 255, 0));
+    z-index: 1000;
+    pointer-events: none;
+    animation: scanline 4s linear infinite;
+}
+
+/* Grid background */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    z-index: -1;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.container {
+    background-color: var(--surface);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6), 
+                0 0 30px rgba(255, 0, 255, 0.2), 
+                0 0 40px rgba(0, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    max-width: 800px;
+    width: 100%;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, 
+        transparent, 
+        var(--primary), 
+        var(--secondary), 
+        transparent);
+    animation: flicker 3s infinite;
+}
+
+h1 {
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    text-shadow: var(--glow-primary);
+    letter-spacing: 2px;
+    animation: flicker 5s infinite;
+}
+
+.players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.player {
+    flex: 1;
+    background-color: rgba(10, 10, 15, 0.7);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.player::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 255, 0.05) 0%, 
+        transparent 50%, 
+        rgba(0, 255, 255, 0.05) 100%);
+    pointer-events: none;
+}
+
+.player.active {
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+}
+
+.player.active::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 14px;
+    background: linear-gradient(45deg, 
+        var(--primary), 
+        transparent 30%, 
+        transparent 70%, 
+        var(--secondary));
+    z-index: -1;
+    animation: flicker 2s infinite;
+}
+
+.player h2 {
+    color: var(--secondary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+.player-score {
+    background-color: var(--primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 1rem;
+    box-shadow: var(--glow-primary);
+    position: relative;
+    text-shadow: none;
+}
+
+.dice-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+@keyframes rolling {
+    0% { transform: rotateX(0) rotateY(0); filter: drop-shadow(0 0 5px var(--primary)); }
+    25% { transform: rotateX(90deg) rotateY(45deg); filter: drop-shadow(0 0 10px var(--secondary)); }
+    50% { transform: rotateX(180deg) rotateY(90deg); filter: drop-shadow(0 0 15px var(--primary)); }
+    75% { transform: rotateX(270deg) rotateY(135deg); filter: drop-shadow(0 0 10px var(--secondary)); }
+    100% { transform: rotateX(360deg) rotateY(180deg); filter: drop-shadow(0 0 5px var(--primary)); }
+}
+
+.dice {
+    width: 80px;
+    height: 80px;
+    background-color: rgba(20, 20, 30, 0.8);
+    border-radius: 10px;
+    display: grid;
+    grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+    align-items: center;
+    justify-items: center;
+    padding: 0.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 5px rgba(0, 255, 255, 0.3);
+    transform-style: preserve-3d;
+    transition: transform 1s ease-out;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    position: relative;
+}
+
+.dice::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    background: linear-gradient(45deg, 
+        transparent, 
+        rgba(0, 255, 255, 0.1), 
+        transparent);
+    pointer-events: none;
+}
+
+.dice.rolling {
+    animation: rolling 0.8s ease-in-out;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    display: none;
+    box-shadow: 0 0 5px var(--primary), 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+@keyframes buttonPulse {
+    0% { box-shadow: 0 0 5px var(--primary), 0 0 10px rgba(255, 0, 255, 0.3); }
+    50% { box-shadow: 0 0 10px var(--primary), 0 0 15px rgba(255, 0, 255, 0.5); }
+    100% { box-shadow: 0 0 5px var(--primary), 0 0 10px rgba(255, 0, 255, 0.3); }
+}
+
+button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 1px;
+    animation: buttonPulse 2s infinite;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+button::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent);
+    transform: rotate(45deg);
+    transition: all 0.3s;
+    z-index: 1;
+    pointer-events: none;
+}
+
+button:hover {
+    background-color: var(--primary-dark);
+    box-shadow: 0 0 15px var(--primary), 0 0 20px rgba(255, 0, 255, 0.7);
+    transform: translateY(-2px);
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+button:disabled {
+    background-color: #444;
+    cursor: not-allowed;
+    box-shadow: none;
+    animation: none;
+}
+
+button svg {
+    z-index: 2;
+}
+
+.result {
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 1.2rem;
+    min-height: 1.5rem;
+}
+
+.win {
+    color: var(--secondary);
+    font-weight: bold;
+    text-shadow: var(--glow-secondary);
+    animation: flicker 2s infinite;
+}
+
+.lose {
+    color: var(--error);
+    font-weight: bold;
+    text-shadow: 0 0 10px var(--error);
+}
+
+.try-again {
+    color: var(--text-secondary);
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+}
+
+.status {
+    text-align: center;
+    margin-top: 1rem;
+    min-height: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+.rounds {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+    letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .players {
+        gap: 1rem;
+    }
+    
+    .player {
+        min-width: 100%;
+    }
+    
+    .dice {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .dot {
+        width: 10px;
+        height: 10px;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Dice Roller Game 🎲</h1>
+        
+        <div class="rounds">Round: <span id="round-count">1</span> of 5</div>
+        
+        <div class="players">
+            <div class="player active" id="player1">
+                <h2>
+                    Player 1
+                    <span class="player-score">0</span>
+                </h2>
+                <div class="dice-container">
+                    <div class="dice" id="dice1-1">
+                        <div class="dot" style="grid-area: 1 / 1;"></div>
+                        <div class="dot" style="grid-area: 1 / 3;"></div>
+                        <div class="dot" style="grid-area: 2 / 2;"></div>
+                        <div class="dot" style="grid-area: 3 / 1;"></div>
+                        <div class="dot" style="grid-area: 3 / 3;"></div>
+                    </div>
+                    <div class="dice" id="dice1-2">
+                        <div class="dot" style="grid-area: 1 / 1;"></div>
+                        <div class="dot" style="grid-area: 1 / 3;"></div>
+                        <div class="dot" style="grid-area: 2 / 2;"></div>
+                        <div class="dot" style="grid-area: 3 / 1;"></div>
+                        <div class="dot" style="grid-area: 3 / 3;"></div>
+                    </div>
+                </div>
+                <div class="result" id="result1"></div>
+            </div>
+            
+            <div class="player" id="player2">
+                <h2>
+                    Player 2
+                    <span class="player-score">0</span>
+                </h2>
+                <div class="dice-container">
+                    <div class="dice" id="dice2-1">
+                        <div class="dot" style="grid-area: 1 / 1;"></div>
+                        <div class="dot" style="grid-area: 1 / 3;"></div>
+                        <div class="dot" style="grid-area: 2 / 2;"></div>
+                        <div class="dot" style="grid-area: 3 / 1;"></div>
+                        <div class="dot" style="grid-area: 3 / 3;"></div>
+                    </div>
+                    <div class="dice" id="dice2-2">
+                        <div class="dot" style="grid-area: 1 / 1;"></div>
+                        <div class="dot" style="grid-area: 1 / 3;"></div>
+                        <div class="dot" style="grid-area: 2 / 2;"></div>
+                        <div class="dot" style="grid-area: 3 / 1;"></div>
+                        <div class="dot" style="grid-area: 3 / 3;"></div>
+                    </div>
+                </div>
+                <div class="result" id="result2"></div>
+            </div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="controls">
+            <button id="roll-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                    <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                    <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Roll Dice
+            </button>
+            <button id="reset-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                </svg>
+                Reset Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Using CDN links for sounds from freesound.org and other open source audio libraries -->
+    <audio id="roll-sound" src="https://cdnjs.cloudflare.com/ajax/libs/sound-effects/1.0.1/dice-roll.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="https://cdnjs.cloudflare.com/ajax/libs/sound-effects/1.0.1/success.mp3" preload="auto"></audio>
+    <audio id="lose-sound" src="https://cdnjs.cloudflare.com/ajax/libs/sound-effects/1.0.1/fail.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const player1 = document.getElementById('player1');
+            const player2 = document.getElementById('player2');
+            const dice1_1 = document.getElementById('dice1-1');
+            const dice1_2 = document.getElementById('dice1-2');
+            const dice2_1 = document.getElementById('dice2-1');
+            const dice2_2 = document.getElementById('dice2-2');
+            const result1 = document.getElementById('result1');
+            const result2 = document.getElementById('result2');
+            const statusElement = document.getElementById('status');
+            const roundCount = document.getElementById('round-count');
+            const rollButton = document.getElementById('roll-button');
+            const resetButton = document.getElementById('reset-button');
+            
+            // Audio elements
+            const rollSound = document.getElementById('roll-sound');
+            const winSound = document.getElementById('win-sound');
+            const loseSound = document.getElementById('lose-sound');
+            
+            // Game state
+            let currentPlayer = 1;
+            let player1Score = 0;
+            let player2Score = 0;
+            let currentRound = 1;
+            const totalRounds = 5;
+            let isRolling = false;
+            
+            // Initialize game
+            resetGame();
+            
+            // Event Listeners
+            rollButton.addEventListener('click', rollDice);
+            resetButton.addEventListener('click', resetGame);
+            
+            // Functions
+            function rollDice() {
+                if (isRolling) return;
+                isRolling = true;
+                
+                // Play rolling sound
+                rollSound.currentTime = 0;
+                rollSound.play()
+                    .catch(error => console.log('Audio playback error:', error));
+                
+                // Get current player dice elements
+                const dice1 = currentPlayer === 1 ? dice1_1 : dice2_1;
+                const dice2 = currentPlayer === 1 ? dice1_2 : dice2_2;
+                const resultElement = currentPlayer === 1 ? result1 : result2;
+                
+                // Add rolling animation
+                dice1.classList.add('rolling');
+                dice2.classList.add('rolling');
+                
+                // Disable roll button during animation
+                rollButton.disabled = true;
+                
+                // Generate random dice values (1-6)
+                const value1 = Math.floor(Math.random() * 6) + 1;
+                const value2 = Math.floor(Math.random() * 6) + 1;
+                const sum = value1 + value2;
+                
+                // After animation finishes
+                setTimeout(() => {
+                    // Remove rolling animation
+                    dice1.classList.remove('rolling');
+                    dice2.classList.remove('rolling');
+                    
+                    // Update dice display
+                    updateDiceDisplay(dice1, value1);
+                    updateDiceDisplay(dice2, value2);
+                    
+                    // Check result based on game rules
+                    let result = '';
+                    let scoreIncrease = 0;
+                    
+                    if (sum === 7 || sum === 11) {
+                        result = `<span class="win">Win! (${sum})</span>`;
+                        scoreIncrease = 2;
+                        
+                        // Play win sound
+                        winSound.currentTime = 0;
+                        winSound.play()
+                            .catch(error => console.log('Audio playback error:', error));
+                            
+                        // Add vibration if supported
+                        if (navigator.vibrate) {
+                            navigator.vibrate([100, 50, 100]);
+                        }
+                    } else if (sum === 2 || sum === 3 || sum === 12) {
+                        result = `<span class="lose">Lose! (${sum})</span>`;
+                        
+                        // Play lose sound
+                        loseSound.currentTime = 0;
+                        loseSound.play()
+                            .catch(error => console.log('Audio playback error:', error));
+                            
+                        // Add vibration if supported
+                        if (navigator.vibrate) {
+                            navigator.vibrate(300);
+                        }
+                    } else {
+                        result = `<span class="try-again">Try again! (${sum})</span>`;
+                        scoreIncrease = 1;
+                    }
+                    
+                    // Update score
+                    if (currentPlayer === 1) {
+                        player1Score += scoreIncrease;
+                        player1.querySelector('.player-score').textContent = player1Score;
+                    } else {
+                        player2Score += scoreIncrease;
+                        player2.querySelector('.player-score').textContent = player2Score;
+                    }
+                    
+                    // Display result
+                    resultElement.innerHTML = result;
+                    
+                    // Switch player
+                    setTimeout(() => {
+                        if (currentPlayer === 1) {
+                            // Switch to player 2's turn
+                            currentPlayer = 2;
+                            player1.classList.remove('active');
+                            player2.classList.add('active');
+                            statusElement.textContent = "Player 2's turn";
+                        } else {
+                            // End of round
+                            currentPlayer = 1;
+                            player2.classList.remove('active');
+                            player1.classList.add('active');
+                            currentRound++;
+                            
+                            if (currentRound <= totalRounds) {
+                                // Next round
+                                roundCount.textContent = currentRound;
+                                statusElement.textContent = "Player 1's turn";
+                            } else {
+                                // Game over
+                                endGame();
+                                return;
+                            }
+                        }
+                        
+                        rollButton.disabled = false;
+                        isRolling = false;
+                    }, 1000);
+                }, 800);
+            }
+            
+            function updateDiceDisplay(diceElement, value) {
+                // Hide all dots
+                const dots = diceElement.querySelectorAll('.dot');
+                dots.forEach(dot => dot.style.display = 'none');
+                
+                // Show dots based on dice value
+                switch (value) {
+                    case 1:
+                        // Center dot
+                        dots[2].style.display = 'block';
+                        break;
+                    case 2:
+                        // Top-left and bottom-right
+                        dots[0].style.display = 'block';
+                        dots[4].style.display = 'block';
+                        break;
+                    case 3:
+                        // Top-left, center, bottom-right
+                        dots[0].style.display = 'block';
+                        dots[2].style.display = 'block';
+                        dots[4].style.display = 'block';
+                        break;
+                    case 4:
+                        // Top-left, top-right, bottom-left, bottom-right
+                        dots[0].style.display = 'block';
+                        dots[1].style.display = 'block';
+                        dots[3].style.display = 'block';
+                        dots[4].style.display = 'block';
+                        break;
+                    case 5:
+                        // Top-left, top-right, center, bottom-left, bottom-right
+                        dots[0].style.display = 'block';
+                        dots[1].style.display = 'block';
+                        dots[2].style.display = 'block';
+                        dots[3].style.display = 'block';
+                        dots[4].style.display = 'block';
+                        break;
+                    case 6:
+                        // All dots except center
+                        dots.forEach((dot, index) => {
+                            if (index !== 2) dot.style.display = 'block';
+                        });
+                        break;
+                }
+            }
+            
+            function endGame() {
+                rollButton.disabled = true;
+                
+                let resultMessage = '';
+                if (player1Score > player2Score) {
+                    resultMessage = `🏆 Player 1 wins! Final score: ${player1Score}-${player2Score}`;
+                    winSound.play().catch(error => console.log('Audio playback error:', error));
+                } else if (player2Score > player1Score) {
+                    resultMessage = `🏆 Player 2 wins! Final score: ${player1Score}-${player2Score}`;
+                    winSound.play().catch(error => console.log('Audio playback error:', error));
+                } else {
+                    resultMessage = `🎲 It's a tie! Final score: ${player1Score}-${player2Score}`;
+                }
+                
+                statusElement.textContent = resultMessage;
+                
+                // Enable reset button
+                resetButton.disabled = false;
+            }
+            
+            function resetGame() {
+                // Reset variables
+                currentPlayer = 1;
+                player1Score = 0;
+                player2Score = 0;
+                currentRound = 1;
+                isRolling = false;
+                
+                // Reset UI
+                player1.classList.add('active');
+                player2.classList.remove('active');
+                
+                player1.querySelector('.player-score').textContent = '0';
+                player2.querySelector('.player-score').textContent = '0';
+                
+                roundCount.textContent = '1';
+                
+                result1.innerHTML = '';
+                result2.innerHTML = '';
+                
+                statusElement.textContent = "Player 1's turn";
+                
+                // Reset dice
+                [dice1_1, dice1_2, dice2_1, dice2_2].forEach(dice => {
+                    updateDiceDisplay(dice, 5); // Reset to showing 5 dots
+                });
+                
+                // Enable roll button
+                rollButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

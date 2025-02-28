@@ -1,0 +1,41 @@
+Core Mechanics:
+
+Player can only move when in shadows
+Sun moves in a circular path, changing shadow positions
+Player must navigate through obstacles to reach the goal
+
+
+Controls:
+
+Arrow keys or WASD to move the player
+Player moves at a consistent speed
+
+
+Game Elements:
+
+Player character (orange circle)
+Moving sun (yellow circle with glow)
+Obstacles (dark blue rectangles)
+Dynamic shadows (calculated based on sun position)
+Goal (blue circle)
+
+
+Level System:
+
+3 progressively challenging levels
+Each level has different obstacle layouts
+Sun moves faster in higher levels
+
+
+Game Logic:
+
+Shadow calculation using vector math
+Collision detection for obstacles and goal
+Level completion when player reaches the goal
+
+
+UI Features:
+
+Level display
+Message system for instructions and level transitions
+Visual feedback when player is in/out of shadow

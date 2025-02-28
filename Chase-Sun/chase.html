@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Chase</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #8ecae6;
+            overflow: hidden;
+        }
+        #sun {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: #ffb703;
+            border-radius: 50%;
+            box-shadow: 0 0 30px 10px rgba(255, 183, 3, 0.7);
+            z-index: 2;
+            transition: left 0.5s linear, top 0.5s linear;
+        }
+        .obstacle {
+            position: absolute;
+            background-color: #023047;
+            z-index: 1;
+        }
+        .shadow {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1;
+        }
+        #player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #fb8500;
+            border-radius: 50%;
+            z-index: 3;
+            transition: left 0.1s ease, top 0.1s ease;
+        }
+        #goal {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #219ebc;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        #level-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+            z-index: 4;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 5;
+            display: none;
+        }
+        button {
+            background-color: #fb8500;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="sun"></div>
+        <div id="player"></div>
+        <div id="goal"></div>
+        <div id="level-display">Level: 1</div>
+        <div id="message">
+            <h2 id="message-title">Welcome to Shadow Chase!</h2>
+            <p id="message-text">Move only when in shadows. Use arrow keys or WASD to move.</p>
+            <button id="message-button">Start Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            player: { x: 50, y: 50, width: 20, height: 20 },
+            sun: { x: 200, y: 100, width: 60, height: 60 },
+            goal: { x: 700, y: 500, width: 30, height: 30 },
+            obstacles: [],
+            shadows: [],
+            level: 1,
+            isMoving: false,
+            isGameActive: false,
+            movementSpeed: 5,
+            keys: { up: false, down: false, left: false, right: false },
+            sunMoveSpeed: 0.5,
+            sunAngle: 0,
+            sunRadius: 200
+        };
+
+        // DOM elements
+        const container = document.getElementById('game-container');
+        const sunElement = document.getElementById('sun');
+        const playerElement = document.getElementById('player');
+        const goalElement = document.getElementById('goal');
+        const levelDisplay = document.getElementById('level-display');
+        const message = document.getElementById('message');
+        const messageTitle = document.getElementById('message-title');
+        const messageText = document.getElementById('message-text');
+        const messageButton = document.getElementById('message-button');
+
+        // Level configurations
+        const levels = [
+            { // Level 1
+                obstacles: [
+                    { x: 200, y: 200, width: 50, height: 200 },
+                    { x: 400, y: 300, width: 200, height: 50 },
+                    { x: 600, y: 100, width: 50, height: 300 }
+                ],
+                player: { x: 50, y: 50 },
+                goal: { x: 700, y: 500 },
+                sun: { x: 300, y: 100 },
+                sunRadius: 200,
+                sunMoveSpeed: 0.5
+            },
+            { // Level 2
+                obstacles: [
+                    { x: 100, y: 100, width: 50, height: 300 },
+                    { x: 300, y: 200, width: 200, height: 50 },
+                    { x: 600, y: 300, width: 50, height: 200 },
+                    { x: 400, y: 500, width: 300, height: 50 }
+                ],
+                player: { x: 50, y: 50 },
+                goal: { x: 750, y: 550 },
+                sun: { x: 400, y: 100 },
+                sunRadius: 250,
+                sunMoveSpeed: 0.8
+            },
+            { // Level 3
+                obstacles: [
+                    { x: 100, y: 100, width: 50, height: 400 },
+                    { x: 200, y: 200, width: 400, height: 50 },
+                    { x: 300, y: 400, width: 50, height: 200 },
+                    { x: 500, y: 300, width: 50, height: 300 },
+                    { x: 600, y: 150, width: 200, height: 50 },
+                    { x: 700, y: 300, width: 50, height: 300 }
+                ],
+                player: { x: 50, y: 50 },
+                goal: { x: 750, y: 550 },
+                sun: { x: 400, y: 100 },
+                sunRadius: 300,
+                sunMoveSpeed: 1.2
+            }
+        ];
+
+        // Initialize the game
+        function initGame() {
+            showMessage('Shadow Chase', 'You can only move in shadows. Reach the blue goal to advance. Use arrow keys or WASD to move.', 'Start Game');
+            messageButton.onclick = () => {
+                hideMessage();
+                startLevel(1);
+            };
+        }
+
+        // Start a specific level
+        function startLevel(levelNumber) {
+            // Clear existing obstacles
+            clearObstacles();
+            
+            // Set game state for level
+            gameState.level = levelNumber;
+            levelDisplay.textContent = `Level: ${levelNumber}`;
+            
+            const levelConfig = levels[levelNumber - 1];
+            
+            // Set player position
+            gameState.player.x = levelConfig.player.x;
+            gameState.player.y = levelConfig.player.y;
+            updatePlayerPosition();
+            
+            // Set goal position
+            gameState.goal.x = levelConfig.goal.x;
+            gameState.goal.y = levelConfig.goal.y;
+            updateGoalPosition();
+            
+            // Set sun position and movement
+            gameState.sun.x = levelConfig.sun.x;
+            gameState.sun.y = levelConfig.sun.y;
+            gameState.sunRadius = levelConfig.sunRadius;
+            gameState.sunMoveSpeed = levelConfig.sunMoveSpeed;
+            gameState.sunAngle = 0;
+            updateSunPosition();
+            
+            // Create obstacles
+            levelConfig.obstacles.forEach(obstacle => {
+                createObstacle(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+            
+            // Calculate initial shadows
+            calculateShadows();
+            
+            // Start game loop
+            gameState.isGameActive = true;
+            if (!gameState.gameLoopActive) {
+                gameState.gameLoopActive = true;
+                gameLoop();
+            }
+        }
+
+        // Create an obstacle
+        function createObstacle(x, y, width, height) {
+            const obstacle = {
+                x: x,
+                y: y,
+                width: width,
+                height: height,
+                element: document.createElement('div')
+            };
+            
+            obstacle.element.className = 'obstacle';
+            obstacle.element.style.left = `${x}px`;
+            obstacle.element.style.top = `${y}px`;
+            obstacle.element.style.width = `${width}px`;
+            obstacle.element.style.height = `${height}px`;
+            
+            container.appendChild(obstacle.element);
+            gameState.obstacles.push(obstacle);
+        }
+
+        // Clear all obstacles
+        function clearObstacles() {
+            gameState.obstacles.forEach(obstacle => {
+                container.removeChild(obstacle.element);
+            });
+            gameState.obstacles = [];
+            
+            // Also clear shadows
+            gameState.shadows.forEach(shadow => {
+                container.removeChild(shadow.element);
+            });
+            gameState.shadows = [];
+        }
+
+        // Calculate shadows cast by obstacles
+        function calculateShadows() {
+            // Remove existing shadow elements
+            gameState.shadows.forEach(shadow => {
+                container.removeChild(shadow.element);
+            });
+            gameState.shadows = [];
+            
+            // Calculate new shadows
+            gameState.obstacles.forEach(obstacle => {
+                // Calculate vector from sun center to obstacle corners
+                const sunCenterX = gameState.sun.x + gameState.sun.width / 2;
+                const sunCenterY = gameState.sun.y + gameState.sun.height / 2;
+                
+                // Calculate shadow for each obstacle
+                const corners = [
+                    { x: obstacle.x, y: obstacle.y }, // top-left
+                    { x: obstacle.x + obstacle.width, y: obstacle.y }, // top-right
+                    { x: obstacle.x, y: obstacle.y + obstacle.height }, // bottom-left
+                    { x: obstacle.x + obstacle.width, y: obstacle.y + obstacle.height } // bottom-right
+                ];
+                
+                // Get the furthest point to extend the shadow
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                const maxDist = Math.max(containerWidth, containerHeight) * 2;
+                
+                // Create shadow for this obstacle
+                const shadowPoints = [];
+                
+                corners.forEach(corner => {
+                    // Vector from sun to corner
+                    const vx = corner.x - sunCenterX;
+                    const vy = corner.y - sunCenterY;
+                    
+                    // Normalize and scale
+                    const mag = Math.sqrt(vx * vx + vy * vy);
+                    const nx = vx / mag;
+                    const ny = vy / mag;
+                    
+                    // Extend to the boundary
+                    shadowPoints.push({
+                        x: corner.x,
+                        y: corner.y
+                    });
+                    
+                    shadowPoints.push({
+                        x: corner.x + nx * maxDist,
+                        y: corner.y + ny * maxDist
+                    });
+                });
+                
+                // Sort points to form a proper polygon
+                // This is a simplified approach and may not work for all cases
+                const centerX = shadowPoints.reduce((sum, p) => sum + p.x, 0) / shadowPoints.length;
+                const centerY = shadowPoints.reduce((sum, p) => sum + p.y, 0) / shadowPoints.length;
+                
+                shadowPoints.sort((a, b) => {
+                    const angleA = Math.atan2(a.y - centerY, a.x - centerX);
+                    const angleB = Math.atan2(b.y - centerY, b.x - centerX);
+                    return angleA - angleB;
+                });
+                
+                // Create a shadow element
+                const shadowElement = document.createElement('div');
+                shadowElement.className = 'shadow';
+                
+                // Create a polygon for the shadow
+                let clipPath = 'polygon(';
+                shadowPoints.forEach((point, index) => {
+                    clipPath += `${point.x}px ${point.y}px`;
+                    if (index < shadowPoints.length - 1) clipPath += ', ';
+                });
+                clipPath += ')';
+                
+                shadowElement.style.clipPath = clipPath;
+                shadowElement.style.left = '0';
+                shadowElement.style.top = '0';
+                shadowElement.style.width = '100%';
+                shadowElement.style.height = '100%';
+                
+                container.appendChild(shadowElement);
+                
+                // Add to game state
+                gameState.shadows.push({
+                    element: shadowElement,
+                    points: shadowPoints
+                });
+            });
+        }
+
+        // Update player position based on game state
+        function updatePlayerPosition() {
+            playerElement.style.left = `${gameState.player.x}px`;
+            playerElement.style.top = `${gameState.player.y}px`;
+        }
+
+        // Update goal position based on game state
+        function updateGoalPosition() {
+            goalElement.style.left = `${gameState.goal.x}px`;
+            goalElement.style.top = `${gameState.goal.y}px`;
+        }
+
+        // Update sun position based on game state
+        function updateSunPosition() {
+            sunElement.style.left = `${gameState.sun.x}px`;
+            sunElement.style.top = `${gameState.sun.y}px`;
+        }
+
+        // Check if player is in shadow
+        function isPlayerInShadow() {
+            const playerCenterX = gameState.player.x + gameState.player.width / 2;
+            const playerCenterY = gameState.player.y + gameState.player.height / 2;
+            
+            // Check if any shadow contains the player
+            return gameState.shadows.some(shadow => {
+                return isPointInPolygon(playerCenterX, playerCenterY, shadow.points);
+            });
+        }
+
+        // Check if point is inside a polygon (ray casting algorithm)
+        function isPointInPolygon(x, y, polygon) {
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i].x, yi = polygon[i].y;
+                const xj = polygon[j].x, yj = polygon[j].y;
+                
+                const intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        // Check collision between two rectangles
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y;
+        }
+
+        // Move the player
+        function movePlayer() {
+            if (!gameState.isGameActive) return;
+            
+            const inShadow = isPlayerInShadow();
+            
+            // Can only move when in shadow
+            if (inShadow) {
+                let newX = gameState.player.x;
+                let newY = gameState.player.y;
+                
+                if (gameState.keys.up) newY -= gameState.movementSpeed;
+                if (gameState.keys.down) newY += gameState.movementSpeed;
+                if (gameState.keys.left) newX -= gameState.movementSpeed;
+                if (gameState.keys.right) newX += gameState.movementSpeed;
+                
+                // Check boundary collisions
+                newX = Math.max(0, Math.min(container.clientWidth - gameState.player.width, newX));
+                newY = Math.max(0, Math.min(container.clientHeight - gameState.player.height, newY));
+                
+                // Check obstacle collisions
+                const newPlayerRect = {
+                    x: newX,
+                    y: newY,
+                    width: gameState.player.width,
+                    height: gameState.player.height
+                };
+                
+                const collisionWithObstacle = gameState.obstacles.some(obstacle => {
+                    return checkCollision(newPlayerRect, obstacle);
+                });
+                
+                if (!collisionWithObstacle) {
+                    gameState.player.x = newX;
+                    gameState.player.y = newY;
+                    updatePlayerPosition();
+                }
+                
+                // Check goal collision
+                if (checkCollision(newPlayerRect, gameState.goal)) {
+                    levelComplete();
+                }
+            }
+            
+            // Update player color based on shadow state
+            if (inShadow) {
+                playerElement.style.backgroundColor = '#fb8500';
+            } else {
+                playerElement.style.backgroundColor = '#fb8500';
+                playerElement.style.opacity = '0.5';
+            }
+        }
+
+        // Move the sun in a circular path
+        function moveSun() {
+            gameState.sunAngle += gameState.sunMoveSpeed * Math.PI / 180;
+            
+            const centerX = container.clientWidth / 2;
+            const centerY = container.clientHeight / 2;
+            
+            gameState.sun.x = centerX + Math.cos(gameState.sunAngle) * gameState.sunRadius - gameState.sun.width / 2;
+            gameState.sun.y = centerY + Math.sin(gameState.sunAngle) * gameState.sunRadius - gameState.sun.height / 2;
+            
+            updateSunPosition();
+            calculateShadows();
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameState.isGameActive) return;
+            
+            moveSun();
+            movePlayer();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Level complete
+        function levelComplete() {
+            gameState.isGameActive = false;
+            
+            if (gameState.level < levels.length) {
+                showMessage('Level Complete!', `You completed level ${gameState.level}. Get ready for the next challenge!`, 'Next Level');
+                messageButton.onclick = () => {
+                    hideMessage();
+                    startLevel(gameState.level + 1);
+                };
+            } else {
+                showMessage('Game Complete!', 'Congratulations! You have mastered Shadow Chase!', 'Play Again');
+                messageButton.onclick = () => {
+                    hideMessage();
+                    startLevel(1);
+                };
+            }
+        }
+
+        // Show message
+        function showMessage(title, text, buttonText) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageButton.textContent = buttonText;
+            message.style.display = 'block';
+        }
+
+        // Hide message
+        function hideMessage() {
+            message.style.display = 'none';
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') gameState.keys.up = true;
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') gameState.keys.down = true;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') gameState.keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') gameState.keys.right = true;
+        });
+
+        document.addEventListener('keyup', e => {
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') gameState.keys.up = false;
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') gameState.keys.down = false;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') gameState.keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') gameState.keys.right = false;
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (gameState.isGameActive) {
+                calculateShadows();
+            }
+        });
+
+        // Initialize the game when page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>
