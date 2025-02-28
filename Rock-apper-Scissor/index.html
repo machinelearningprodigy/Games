@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rock Paper Scissors</title>
+  <style>
+:root {
+  --primary: #ff0266;
+  --secondary: #00f8ff;
+  --light: #e0fbfc;
+  --dark: #0a0a0a;
+  --success: #00ff66;
+  --danger: #ff2800;
+  --warning: #ffcc00;
+  --neon-glow: 0 0 10px rgba(0, 248, 255, 0.7), 0 0 20px rgba(0, 248, 255, 0.5), 0 0 30px rgba(0, 248, 255, 0.3);
+  --danger-glow: 0 0 10px rgba(255, 40, 0, 0.7), 0 0 20px rgba(255, 40, 0, 0.5), 0 0 30px rgba(255, 40, 0, 0.3);
+  --success-glow: 0 0 10px rgba(0, 255, 102, 0.7), 0 0 20px rgba(0, 255, 102, 0.5), 0 0 30px rgba(0, 255, 102, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Orbitron', 'Rajdhani', sans-serif;
+}
+
+@keyframes backgroundPulse {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+    opacity: 0.99;
+    text-shadow: var(--neon-glow);
+  }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% {
+    opacity: 0.4;
+    text-shadow: none;
+  }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes circuitAnimation {
+  0% { background-position: 0px 0px, 0px 0px, 0px 0px; }
+  100% { background-position: 500px 1000px, 400px 800px, 300px 600px; }
+}
+
+body {
+  background-color: var(--dark);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 2, 102, 0.1) 0%, transparent 80%),
+    linear-gradient(to right, rgba(0, 248, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 248, 255, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px, 20px 20px;
+  animation: circuitAnimation 20s linear infinite;
+  color: var(--light);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 200%;
+  animation: backgroundPulse 5s ease infinite;
+  z-index: 100;
+}
+
+body::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(to bottom, 
+    rgba(0, 248, 255, 0) 0%,
+    rgba(0, 248, 255, 0.2) 50%, 
+    rgba(0, 248, 255, 0) 100%);
+  z-index: 99;
+  opacity: 0.5;
+  pointer-events: none;
+  animation: scanline 4s linear infinite;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  background-color: rgba(10, 10, 10, 0.8);
+  border: 1px solid var(--secondary);
+  border-radius: 5px;
+  padding: 30px;
+  box-shadow: var(--neon-glow);
+  overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(10px);
+  z-index: 1;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(90deg, transparent 50%, rgba(0, 248, 255, 0.05) 50%),
+    linear-gradient(rgba(10, 10, 10, 0.9), rgba(10, 10, 10, 0.9));
+  background-size: 4px 100%, 100% 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(0, 248, 255, 0.1), 
+    transparent);
+  animation: scanline 3s ease-in-out infinite;
+  transform: skewX(-20deg);
+  pointer-events: none;
+  z-index: -1;
+}
+
+h1 {
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 700;
+  font-size: 2.5rem;
+  color: var(--secondary);
+  text-shadow: var(--neon-glow);
+  position: relative;
+  animation: flicker 3s infinite alternate;
+  letter-spacing: 2px;
+}
+
+h1::before, h1::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+h1::before {
+  color: var(--danger);
+  transform: translateX(-2px);
+  opacity: 0.7;
+}
+
+h1::after {
+  color: var(--success);
+  transform: translateX(2px);
+  opacity: 0.7;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: rgba(10, 10, 10, 0.7);
+  border: 1px solid var(--secondary);
+  border-radius: 5px;
+  box-shadow: inset 0 0 10px rgba(0, 248, 255, 0.3);
+}
+
+.score {
+  text-align: center;
+  flex: 1;
+  position: relative;
+}
+
+.score h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: var(--light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.score p {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--secondary);
+  text-shadow: var(--neon-glow);
+  font-family: 'Orbitron', monospace;
+}
+
+.battle-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  min-height: 200px;
+  position: relative;
+}
+
+.battle-area::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--secondary), 
+    transparent);
+  box-shadow: var(--neon-glow);
+  z-index: -1;
+}
+
+.player, .computer {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.player h3, .computer h3 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.player h3 {
+  color: var(--success);
+  text-shadow: var(--success-glow);
+}
+
+.computer h3 {
+  color: var(--danger);
+  text-shadow: var(--danger-glow);
+}
+
+.vs {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--warning);
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+  padding: 0 20px;
+  position: relative;
+}
+
+.vs::before, .vs::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background-color: var(--warning);
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+}
+
+.vs::before {
+  left: -10px;
+  transform: rotate(45deg);
+}
+
+.vs::after {
+  right: -10px;
+  transform: rotate(-45deg);
+}
+
+.hand {
+  width: 120px;
+  height: 120px;
+  background-color: rgba(10, 10, 10, 0.7);
+  border: 2px solid;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.player .hand {
+  transform: scaleX(-1);
+  border-color: var(--success);
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+}
+
+.computer .hand {
+  border-color: var(--danger);
+  box-shadow: 0 0 10px rgba(255, 40, 0, 0.3);
+}
+
+.hand::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: radial-gradient(circle at center, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    transparent 70%);
+  z-index: -1;
+}
+
+.bounce {
+  animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.rotate {
+  animation: rotate 0.5s;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.shake {
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.choices {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.choice {
+  width: 80px;
+  height: 80px;
+  background-color: rgba(10, 10, 10, 0.7);
+  border: 2px solid var(--secondary);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, 
+    rgba(0, 248, 255, 0.3) 0%, 
+    transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.choice:hover {
+  transform: scale(1.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 15px rgba(255, 2, 102, 0.7);
+}
+
+.choice:hover::before {
+  opacity: 1;
+}
+
+.choice:active {
+  transform: scale(0.95);
+}
+
+.result {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  height: 40px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.win {
+  color: var(--success);
+  text-shadow: var(--success-glow);
+}
+
+.lose {
+  color: var(--danger);
+  text-shadow: var(--danger-glow);
+}
+
+.draw {
+  color: var(--warning);
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 30px;
+  background-color: transparent;
+  color: var(--secondary);
+  border: 2px solid var(--secondary);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(0, 248, 255, 0.2), 
+    transparent);
+  transition: left 0.7s ease;
+  z-index: -1;
+}
+
+.btn:hover {
+  color: var(--light);
+  box-shadow: var(--neon-glow);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 5px rgba(0, 248, 255, 0.5);
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  color: var(--secondary);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100px;
+  height: 5px;
+  background: rgba(0, 248, 255, 0.2);
+  border-radius: 5px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  background: var(--secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: var(--neon-glow);
+}
+
+.goal-section {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: rgba(10, 10, 10, 0.7);
+  border: 1px solid var(--secondary);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-shadow: inset 0 0 10px rgba(0, 248, 255, 0.3);
+}
+
+.goal-title {
+  font-size: 1.2rem;
+  color: var(--light);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.goal-options {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.goal-option {
+  padding: 8px 20px;
+  background-color: rgba(10, 10, 10, 0.7);
+  border: 1px solid var(--secondary);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.goal-option::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(0, 248, 255, 0.2), 
+    transparent);
+  transition: left 0.7s ease;
+  z-index: -1;
+}
+
+.goal-option:hover {
+  box-shadow: var(--neon-glow);
+}
+
+.goal-option:hover::before {
+  left: 100%;
+}
+
+.goal-option.active {
+  background-color: rgba(0, 248, 255, 0.2);
+  color: var(--light);
+  box-shadow: var(--neon-glow);
+}
+
+.game-over-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.game-over-modal.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.game-over-content {
+  background-color: rgba(10, 10, 10, 0.9);
+  border: 2px solid var(--secondary);
+  border-radius: 5px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--neon-glow);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-over-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 200%;
+  animation: backgroundPulse 5s ease infinite;
+}
+
+.game-over-modal.active .game-over-content {
+  transform: scale(1);
+}
+
+.game-over-title {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: var(--secondary);
+  text-shadow: var(--neon-glow);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: 'Orbitron', sans-serif;
+  animation: flicker 3s infinite alternate;
+}
+
+.game-over-message {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+@media (max-width: 768px) {
+  .battle-area {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .vs {
+    margin: 10px 0;
+  }
+  
+  .choices {
+    flex-wrap: wrap;
+  }
+  
+  .controls {
+    flex-direction: column;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
+}
+
+/* Add this element to your HTML just after the opening body tag */
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(to bottom, 
+    rgba(0, 248, 255, 0) 0%,
+    rgba(0, 248, 255, 0.2) 50%, 
+    rgba(0, 248, 255, 0) 100%);
+  z-index: 99;
+  opacity: 0.5;
+  pointer-events: none;
+  animation: scanline 4s linear infinite;
+}
+  </style>
+</head>
+<body>
+    <div class="scanline"></div>
+  <div class="container">
+    <h1>Rock Paper Scissors</h1>
+    
+    <div class="goal-section">
+      <div class="goal-title">First to reach:</div>
+      <div class="goal-options">
+        <div class="goal-option active" data-goal="5">5 Points</div>
+        <div class="goal-option" data-goal="10">10 Points</div>
+        <div class="goal-option" data-goal="15">15 Points</div>
+        <div class="goal-option" data-goal="20">20 Points</div>
+      </div>
+    </div>
+    
+    <div class="scoreboard">
+      <div class="score">
+        <h2>You</h2>
+        <p id="player-score">0</p>
+      </div>
+      <div class="score">
+        <h2>Ties</h2>
+        <p id="ties">0</p>
+      </div>
+      <div class="score">
+        <h2>Computer</h2>
+        <p id="computer-score">0</p>
+      </div>
+    </div>
+    
+    <div class="battle-area">
+      <div class="player">
+        <h3>You</h3>
+        <div class="hand" id="player-hand">👊</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="computer">
+        <h3>Computer</h3>
+        <div class="hand" id="computer-hand">👊</div>
+      </div>
+    </div>
+    
+    <div class="result" id="result">Choose Your Weapon!</div>
+    
+    <div class="choices">
+      <div class="choice" id="rock">👊</div>
+      <div class="choice" id="paper">✋</div>
+      <div class="choice" id="scissors">✌️</div>
+    </div>
+    
+    <div class="controls">
+      <button class="btn" id="reset-btn">Reset Game</button>
+      <div class="volume-control">
+        <span>🔊</span>
+        <input type="range" id="volume" min="0" max="1" step="0.1" value="0.5">
+      </div>
+    </div>
+  </div>
+  
+  <div class="game-over-modal" id="game-over-modal">
+    <div class="game-over-content">
+      <h2 class="game-over-title">Game Over!</h2>
+      <p class="game-over-message" id="winner-message"></p>
+      <div class="button-group">
+        <button class="btn" id="play-again-btn">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Game Variables
+    let playerScore = 0;
+    let computerScore = 0;
+    let ties = 0;
+    let volume = 0.5;
+    let targetScore = 5;
+    let gameActive = true;
+    
+    // DOM Elements
+    const playerScoreEl = document.getElementById('player-score');
+    const computerScoreEl = document.getElementById('computer-score');
+    const tiesEl = document.getElementById('ties');
+    const resultEl = document.getElementById('result');
+    const playerHandEl = document.getElementById('player-hand');
+    const computerHandEl = document.getElementById('computer-hand');
+    const choices = document.querySelectorAll('.choice');
+    const resetBtn = document.getElementById('reset-btn');
+    const volumeControl = document.getElementById('volume');
+    const goalOptions = document.querySelectorAll('.goal-option');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const winnerMessage = document.getElementById('winner-message');
+    const playAgainBtn = document.getElementById('play-again-btn');
+    
+    // Audio Elements
+    const winSound = new Audio('https://cdn.freesound.org/previews/270/270402_5123851-lq.mp3'); // Win sound from freesound.org
+    const loseSound = new Audio('https://cdn.freesound.org/previews/131/131657_2398403-lq.mp3'); // Lose sound from freesound.org
+    const clickSound = new Audio('https://cdn.freesound.org/previews/242/242501_4414130-lq.mp3'); // Click sound from freesound.org
+    const tieSound = new Audio('https://cdn.freesound.org/previews/276/276913_5123851-lq.mp3'); // Tie sound from freesound.org
+    const gameOverSound = new Audio('https://cdn.freesound.org/previews/270/270404_5123851-lq.mp3'); // Game over sound from freesound.org
+    
+    // Game icons
+    const gameIcons = {
+      rock: '👊',
+      paper: '✋',
+      scissors: '✌️'
+    };
+    
+    // Initialize game
+    function init() {
+      resetScores();
+      setupEventListeners();
+    }
+    
+    // Setup event listeners
+    function setupEventListeners() {
+      choices.forEach(choice => {
+        choice.addEventListener('click', () => {
+          if (gameActive) {
+            playClickSound();
+            const playerChoice = choice.id;
+            playGame(playerChoice);
+          }
+        });
+      });
+      
+      resetBtn.addEventListener('click', resetGame);
+      
+      volumeControl.addEventListener('input', (e) => {
+        volume = e.target.value;
+        updateVolume();
+      });
+      
+      goalOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          setTargetScore(option);
+        });
+      });
+      
+      playAgainBtn.addEventListener('click', () => {
+        gameOverModal.classList.remove('active');
+        resetGame();
+      });
+    }
+    
+    // Set target score
+    function setTargetScore(option) {
+      // First check if game has already started
+      if (playerScore > 0 || computerScore > 0 || ties > 0) {
+        if (confirm('Changing the target score will reset the current game. Continue?')) {
+          resetScores();
+        } else {
+          return;
+        }
+      }
+      
+      goalOptions.forEach(opt => opt.classList.remove('active'));
+      option.classList.add('active');
+      targetScore = parseInt(option.dataset.goal);
+      playClickSound();
+    }
+    
+    // Update volume for all sounds
+    function updateVolume() {
+      winSound.volume = volume;
+      loseSound.volume = volume;
+      clickSound.volume = volume;
+      tieSound.volume = volume;
+      gameOverSound.volume = volume;
+    }
+    
+    // Play click sound
+    function playClickSound() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
+    
+    // Check for game over
+    function checkGameOver() {
+      if (playerScore >= targetScore || computerScore >= targetScore) {
+        gameActive = false;
+        
+        setTimeout(() => {
+          gameOverSound.currentTime = 0;
+          gameOverSound.play();
+          
+          if (playerScore >= targetScore) {
+            winnerMessage.textContent = `Congratulations! You won ${playerScore} to ${computerScore}!`;
+            winnerMessage.className = 'game-over-message win';
+          } else {
+            winnerMessage.textContent = `Computer won ${computerScore} to ${playerScore}. Better luck next time!`;
+            winnerMessage.className = 'game-over-message lose';
+          }
+          
+          gameOverModal.classList.add('active');
+        }, 1500);
+      }
+    }
+    
+    // Play game
+    function playGame(playerChoice) {
+      // Reset hands
+      playerHandEl.textContent = gameIcons.rock;
+      computerHandEl.textContent = gameIcons.rock;
+      resultEl.textContent = '';
+      resultEl.className = 'result';
+      
+      // Add animation class
+      playerHandEl.classList.add('shake');
+      computerHandEl.classList.add('shake');
+      
+      // Timeout to simulate computer thinking
+      setTimeout(() => {
+        // Remove animations
+        playerHandEl.classList.remove('shake');
+        computerHandEl.classList.remove('shake');
+        
+        // Get computer choice
+        const computerChoice = getComputerChoice();
+        
+        // Set player and computer hand icons
+        playerHandEl.textContent = gameIcons[playerChoice];
+        computerHandEl.textContent = gameIcons[computerChoice];
+        
+        // Add bounce animation
+        playerHandEl.classList.add('bounce');
+        computerHandEl.classList.add('bounce');
+        
+        // Determine winner
+        const winner = getWinner(playerChoice, computerChoice);
+        
+        // Show result and update score
+        showResult(winner, computerChoice);
+        
+        // Check for game over
+        checkGameOver();
+        
+        // Remove bounce animation after delay
+        setTimeout(() => {
+          playerHandEl.classList.remove('bounce');
+          computerHandEl.classList.remove('bounce');
+        }, 500);
+        
+      }, 1000);
+    }
+    
+    // Get computer's choice
+    function getComputerChoice() {
+      const choices = ['rock', 'paper', 'scissors'];
+      const randomIndex = Math.floor(Math.random() * 3);
+      return choices[randomIndex];
+    }
+    
+    // Get game winner
+    function getWinner(p, c) {
+      if (p === c) {
+        return 'tie';
+      } else if (
+        (p === 'rock' && c === 'scissors') ||
+        (p === 'paper' && c === 'rock') ||
+        (p === 'scissors' && c === 'paper')
+      ) {
+        return 'player';
+      } else {
+        return 'computer';
+      }
+    }
+    
+    // Show game result
+    function showResult(winner, computerChoice) {
+      if (winner === 'player') {
+        resultEl.textContent = 'You Win!';
+        resultEl.classList.add('win');
+        playerScore++;
+        playerScoreEl.textContent = playerScore;
+        winSound.currentTime = 0;
+        winSound.play();
+      } else if (winner === 'computer') {
+        resultEl.textContent = 'You Lose!';
+        resultEl.classList.add('lose');
+        computerScore++;
+        computerScoreEl.textContent = computerScore;
+        loseSound.currentTime = 0;
+        loseSound.play();
+      } else {
+        resultEl.textContent = 'It\'s a Tie!';
+        resultEl.classList.add('draw');
+        ties++;
+        tiesEl.textContent = ties;
+        tieSound.currentTime = 0;
+        tieSound.play();
+      }
+    }
+    
+    // Reset scores
+    function resetScores() {
+      playerScore = 0;
+      computerScore = 0;
+      ties = 0;
+      playerScoreEl.textContent = playerScore;
+      computerScoreEl.textContent = computerScore;
+      tiesEl.textContent = ties;
+      resultEl.textContent = 'Choose Your Weapon!';
+      resultEl.className = 'result';
+      playerHandEl.textContent = gameIcons.rock;
+      computerHandEl.textContent = gameIcons.rock;
+    }
+    
+    // Reset game completely
+    function resetGame() {
+      resetScores();
+      gameActive = true;
+      playClickSound();
+    }
+    
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      init();
+      updateVolume();
+    });
+  </script>
+</body>
+</html>
