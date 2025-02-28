@@ -20,7 +20,7 @@ Welcome to my **collection of exciting browser games!** From arcade classics to 
 | 🏓 **Pong Game** | [Play Now!](https://machinelearningprodigy.github.io/Games/Pong/) |
 | ✂️ **Rock Paper Scissors** | [Play Now!](https://machinelearningprodigy.github.io/Games/Rock-apper-Scissor/) |
 | 🔫 **Shooting Game** | [Play Now!](https://machinelearningprodigy.github.io/Games/Shooting/) |
-| 🐍 **Snake Game** | [Play Now!](https://machinelearningprodigy.github.io/Games/Snake-Game/) |
+| 🐍 **Snake Game** | [Play Now!](https://machinelearningprodigy.github.io/Games/Snake%20Game/) |
 | ❌⭕ **Tic Tac Toe** | [Play Now!](https://machinelearningprodigy.github.io/Games/Tic-tac-Toe/) |
 | 🏎️ **Top-Down Racing** | [Play Now!](https://machinelearningprodigy.github.io/Games/Top-Down/) |
 
